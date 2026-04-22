@@ -430,11 +430,11 @@ function renderEvolucoes() {
   document.getElementById('evolucoes-list').innerHTML = evs.length
     ? evs.map(function(e) {
         var pac = pacs.find(function(p) { return p.id === e.pacienteId; });
-        return '<div class="list-card"><div class="card-avatar">📋</div><div class="card-body">' +
+                return '<div class="list-card" onclick="editarEvolucao(\'' + e.id + '\')"><div class="card-avatar">📋</div><div class="card-body">' +
           '<div class="card-name">' + (pac?pac.nome:'N/D') + '</div>' +
           '<div class="card-sub">' + fmtDate(e.data) + ' · Sessão ' + (e.sessao||'—') + ' · EVA: ' + (e.eva != null ? e.eva : '—') + '/10</div>' +
           '<div class="card-sub mt-8">' + (e.subj||'').substring(0,60) + '</div></div>' +
-          '<div class="card-actions">' +
+          '<div class="card-actions" onclick="event.stopPropagation()">' +
           '<button class="btn-primary btn-sm" onclick="editarEvolucao(\'' + e.id + '\')">✏️</button>' +
           '<button class="btn-danger btn-sm" onclick="deletarEvolucao(\'' + e.id + '\')">🗑</button></div></div>';
       }).join('')
@@ -502,11 +502,11 @@ function renderAnamneses() {
   document.getElementById('anamneses-list').innerHTML = ans.length
     ? ans.map(function(a) {
         var pac = pacs.find(function(p) { return p.id === a.pacienteId; });
-        return '<div class="list-card"><div class="card-avatar">📝</div><div class="card-body">' +
+                return '<div class="list-card" onclick="editarAnamnese(\'' + a.id + '\')"><div class="card-avatar">📝</div><div class="card-body">' +
           '<div class="card-name">' + (pac?pac.nome:'N/D') + '</div>' +
           '<div class="card-sub">' + fmtDate(a.data) + ' · ' + (a.diag||'Sem diagnóstico') + '</div>' +
           '<div class="card-sub mt-8">' + (a.queixa||'').substring(0,60) + '</div></div>' +
-          '<div class="card-actions">' +
+          '<div class="card-actions" onclick="event.stopPropagation()">' +
           '<button class="btn-primary btn-sm" onclick="editarAnamnese(\'' + a.id + '\')">✏️</button>' +
           '<button class="btn-danger btn-sm" onclick="deletarAnamnese(\'' + a.id + '\')">🗑</button></div></div>';
       }).join('')
