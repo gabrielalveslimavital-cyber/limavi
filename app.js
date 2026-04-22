@@ -308,6 +308,40 @@ function detalhePaciente(id) {
     }).join('') || '<div class="text-muted">Sem evoluções ainda.</div>') +
     '</div></div>';
   document.getElementById('btn-editar-pac').onclick = function() { closeModal('modal-detalhe-pac'); editarPaciente(id); };
+    // Preparar dados para o gráfico de Dor (EVA)
+  let evsOrdenadas = evs.slice().sort((a,b) => a.data.localeCompare(b.data));
+  let datas = evsOrdenadas.map(e => fmtDate(e.data));
+  let evas = evsOrdenadas.map(e => e.eva ? parseInt(e.eva) : null);
+
+  // Injetar o canvas do gráfico no HTML do detalhe
+  document.getElementById('detalhe-pac-body').innerHTML += `
+    <div class="detail-section mt-16">
+      <h4>Evolução da Dor (EVA)</h4>
+      <canvas id="graficoEva" style="width:100%; max-height:200px;"></canvas>
+    </div>
+  `;
+
+  // Desenhar o Gráfico (destruindo o anterior se existir para não bugar)
+  if(window.meuGrafico) window.meuGrafico.destroy();
+  const ctx = document.getElementById('graficoEva');
+  if(ctx && evas.some(e => e !== null)) {
+    window.meuGrafico = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: datas,
+        datasets: [{
+          label: 'Nível de Dor',
+          data: evas,
+          borderColor: '#2d7a6e',
+          backgroundColor: 'rgba(45,122,110,0.1)',
+          tension: 0.3,
+          fill: true
+        }]
+      },
+      options: { scales: { y: { min: 0, max: 10 } } }
+    });
+  }
+
   document.getElementById('modal-detalhe-pac').classList.remove('hidden');
 }
 
@@ -641,7 +675,46 @@ initData();
     var u = DB.get('profissionais').find(function(p) { return p.id === sess.id; });
     if (u) { showApp(u); return; }
   }
-  // Sessão inexistente ou expirada — força login
+  // Sessão inexistente ou wexpirada — força login
   DB.del('limavi_session');
   showLogin();
 })();
+function gerarPDFPaciente() {
+  const elemento = document.getElementById('detalhe-pac-body');
+  const nomePaciente = document.getElementById('detalhe-pac-nome').textContent;
+  
+  const opt = {
+    margin:       10,
+    filename:     `Prontuario_${nomePaciente.replace(/\s+/g, '_')}.pdf`,
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2 },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  html2pdf().set(opt).from(elemento).save();
+}
+function usarTemplate(tipo) {
+  const campo = document.getElementById('ev-obj');
+  let texto = "";
+  
+  if (tipo === 'neuro') {
+    texto = "- Nível de Consciência:\n- Tônus Muscular (Ashworth):\n- Controle de Tronco:\n- Equilíbrio (Estático/Dinâmico):\n- Coordenação Motora:\n- Marcha:";
+  } else if (tipo === 'respiratoria') {
+    texto = "- Padrão Ventilatório:\n- Ritmo e Amplitude:\n- Sinais de Desconforto Respiratório:\n- Ausculta Pulmonar:\n- Tosse (Eficácia/Secreção):\n- SpO2 em repouso: %";
+  } else if (tipo === 'orto') {
+    texto = "- Inspeção (Edema/Coloração):\n- Palpação:\n- ADM (Ativa e Passiva):\n- Força Muscular (Grau 0-5):\n- Testes Especiais:\n- Alterações posturais:";
+  }
+  
+  // Adiciona o texto se o campo estiver vazio, ou pula uma linha se já tiver algo
+  campo.value = campo.value ? campo.value + "\n\n" + texto : texto;
+}
+function addConduta(texto) {
+  const campo = document.getElementById('ev-plano');
+  // Se já tiver texto, adiciona um traço na nova linha, senão, começa direto
+  if (campo.value && !campo.value.endsWith('\n')) {
+    campo.value += '\n- ' + texto;
+  } else {
+    campo.value += '- ' + texto;
+  }
+}
+
