@@ -27,6 +27,10 @@ function initData() {
 let currentUser = null;
 
 function showLogin() {
+  // Força a tela de login a aparecer e a do app a sumir instantaneamente
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app-screen').style.display = 'none';
+  
   document.getElementById('login-screen').classList.add('active');
   document.getElementById('app-screen').classList.remove('active');
   currentUser = null;
@@ -38,10 +42,16 @@ function showApp(user) {
   const isAdmin = user.perfil === 'admin';
   document.getElementById('nav-profissionais').style.display = isAdmin ? '' : 'none';
   document.getElementById('nav-relatorios').style.display = isAdmin ? '' : 'none';
+  
+  // Destranca visualmente o app somente após a validação dos dados
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'block';
+  
   document.getElementById('login-screen').classList.remove('active');
   document.getElementById('app-screen').classList.add('active');
   navigate('dashboard');
 }
+
 
 function doLogin() {
   const email = document.getElementById('login-user').value.trim().toLowerCase();
