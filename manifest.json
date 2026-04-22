@@ -2,7 +2,7 @@
   "name": "Limavi Fisioterapia",
   "short_name": "Limavi",
   "description": "Sistema de Gestão Clínica para Fisioterapia",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#f4f8f7",
   "theme_color": "#2d7a6e",
