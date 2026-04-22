@@ -199,15 +199,15 @@ function renderDashboard() {
   document.getElementById('upcoming-list').innerHTML = upcoming.length
     ? upcoming.map(function(a) {
         var pac = pacs.find(function(p) { return p.id === a.pacienteId; });
-        return '<div class="upcoming-item"><span class="item-time">' + a.hora + '</span><div><div class="item-name">' + (pac ? pac.nome : 'N/D') + '</div><div class="item-sub">' + fmtDate(a.data) + ' · ' + statusTag(a.status) + '</div></div></div>';
+                return '<div class="upcoming-item" onclick="visualizarAgendamento(\'' + a.id + '\')" style="cursor:pointer"><span class="item-time">' + a.hora + '</span><div><div class="item-name">' + (pac ? pac.nome : 'N/D') + '</div><div class="item-sub">' + fmtDate(a.data) + ' · ' + statusTag(a.status) + '</div></div></div>';
       }).join('')
     : '<div class="empty-state"><div class="empty-icon">📅</div>Sem agendamentos futuros</div>';
 
   var recentPacs = pacs.slice().reverse().slice(0,5);
   document.getElementById('recent-patients').innerHTML = recentPacs.length
     ? recentPacs.map(function(p) {
-        return '<div class="recent-item"><div class="card-avatar">' + initials(p.nome) + '</div><div><div class="item-name">' + p.nome + '</div><div class="item-sub">' + idade(p.dataNasc) + ' anos · ' + (p.tel || '—') + '</div></div></div>';
-      }).join('')
+                return '<div class="recent-item" onclick="detalhePaciente(\'' + p.id + '\')" style="cursor:pointer"><div class="card-avatar">' + initials(p.nome) + '</div><div><div class="item-name">' + p.nome + '</div><div class="item-sub">' + idade(p.dataNasc) + ' anos · ' + (p.tel || '—') + '</div></div></div>';
+    }).join('')
     : '<div class="empty-state"><div class="empty-icon">👤</div>Nenhum paciente cadastrado</div>';
 }
 
@@ -368,7 +368,7 @@ function renderAgenda() {
       '<div class="agenda-slots">' +
       (dayAgs.length ? dayAgs.map(function(a) {
         var pac = pacs.find(function(p) { return p.id === a.pacienteId; });
-        return '<div class="agenda-slot" onclick="editarAgendamento(\'' + a.id + '\')">' +
+        return '<div class="agenda-slot" onclick="visualizarAgendamento(\'' + a.id + '\')">' +
           '<span class="slot-time">' + a.hora + '</span>' +
           '<span class="slot-name">' + (pac?pac.nome:'N/D') + '</span>' +
           statusTag(a.status) + '</div>';
@@ -430,7 +430,7 @@ function renderEvolucoes() {
   document.getElementById('evolucoes-list').innerHTML = evs.length
     ? evs.map(function(e) {
         var pac = pacs.find(function(p) { return p.id === e.pacienteId; });
-                return '<div class="list-card" onclick="editarEvolucao(\'' + e.id + '\')"><div class="card-avatar">📋</div><div class="card-body">' +
+                        return '<div class="list-card" onclick="visualizarEvolucao(\'' + e.id + '\')"><div class="card-avatar">📋</div><div class="card-body">' +
           '<div class="card-name">' + (pac?pac.nome:'N/D') + '</div>' +
           '<div class="card-sub">' + fmtDate(e.data) + ' · Sessão ' + (e.sessao||'—') + ' · EVA: ' + (e.eva != null ? e.eva : '—') + '/10</div>' +
           '<div class="card-sub mt-8">' + (e.subj||'').substring(0,60) + '</div></div>' +
@@ -502,7 +502,7 @@ function renderAnamneses() {
   document.getElementById('anamneses-list').innerHTML = ans.length
     ? ans.map(function(a) {
         var pac = pacs.find(function(p) { return p.id === a.pacienteId; });
-                return '<div class="list-card" onclick="editarAnamnese(\'' + a.id + '\')"><div class="card-avatar">📝</div><div class="card-body">' +
+                        return '<div class="list-card" onclick="visualizarAnamnese(\'' + a.id + '\')"><div class="card-avatar">📝</div><div class="card-body">' +
           '<div class="card-name">' + (pac?pac.nome:'N/D') + '</div>' +
           '<div class="card-sub">' + fmtDate(a.data) + ' · ' + (a.diag||'Sem diagnóstico') + '</div>' +
           '<div class="card-sub mt-8">' + (a.queixa||'').substring(0,60) + '</div></div>' +
@@ -716,5 +716,78 @@ function addConduta(texto) {
   } else {
     campo.value += '- ' + texto;
   }
+}// ─── MODO DE VISUALIZAÇÃO (LEITURA) ────────────────────────────────────────
+
+function visualizarAnamnese(id) {
+  var a = DB.get('anamneses').find(function(x) { return x.id === id; });
+  var pac = DB.get('pacientes').find(function(p) { return p.id === a.pacienteId; });
+  if (!a) return;
+
+  document.getElementById('detalhe-pac-nome').textContent = 'Anamnese: ' + (pac ? pac.nome : 'N/D');
+  document.getElementById('detalhe-pac-body').innerHTML =
+    '<div class="detail-section" style="line-height: 1.6;">' +
+    '<h4 style="margin-bottom: 16px;">Data: ' + fmtDate(a.data) + ' · ' + (a.diag||'Sem diagnóstico') + '</h4>' +
+    '<div class="mt-8"><label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">QUEIXA PRINCIPAL</label><div>' + (a.queixa||'—').replace(/\n/g, '<br>') + '</div></div>' +
+    '<div class="mt-8"><label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">HISTÓRIA (HDA)</label><div>' + (a.hda||'—').replace(/\n/g, '<br>') + '</div></div>' +
+    '<div class="mt-8"><label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">ANTECEDENTES</label><div>' + (a.pessoais||'—').replace(/\n/g, '<br>') + '</div></div>' +
+    '<div class="mt-8"><label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">MEDICAMENTOS</label><div>' + (a.meds||'—').replace(/\n/g, '<br>') + '</div></div>' +
+    '<div class="mt-8"><label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">OBJETIVOS</label><div>' + (a.objetivos||'—').replace(/\n/g, '<br>') + '</div></div>' +
+    '</div>';
+
+  // Configura o botão azul do modal para ir para a edição, caso você queira alterar algo
+  var btnEditar = document.getElementById('btn-editar-pac');
+  btnEditar.textContent = "Editar Anamnese";
+  btnEditar.onclick = function() { closeModal('modal-detalhe-pac'); editarAnamnese(id); };
+  
+  document.getElementById('modal-detalhe-pac').classList.remove('hidden');
 }
 
+function visualizarEvolucao(id) {
+  var e = DB.get('evolucoes').find(function(x) { return x.id === id; });
+  var pac = DB.get('pacientes').find(function(p) { return p.id === e.pacienteId; });
+  if (!e) return;
+
+  document.getElementById('detalhe-pac-nome').textContent = 'Evolução: ' + (pac ? pac.nome : 'N/D');
+  document.getElementById('detalhe-pac-body').innerHTML =
+    '<div class="detail-section" style="line-height: 1.6;">' +
+    '<h4 style="margin-bottom: 16px;">Data: ' + fmtDate(e.data) + ' · Sessão ' + (e.sessao||'—') + ' · EVA: ' + (e.eva!=null?e.eva:'—') + '/10</h4>' +
+    '<div class="mt-8"><label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">SUBJETIVO (S)</label><div>' + (e.subj||'—').replace(/\n/g, '<br>') + '</div></div>' +
+    '<div class="mt-8"><label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">OBJETIVO (O)</label><div>' + (e.obj||'—').replace(/\n/g, '<br>') + '</div></div>' +
+    '<div class="mt-8"><label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">AVALIAÇÃO (A)</label><div>' + (e.aval||'—').replace(/\n/g, '<br>') + '</div></div>' +
+    '<div class="mt-8"><label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">PLANO / CONDUTA (P)</label><div>' + (e.plano||'—').replace(/\n/g, '<br>') + '</div></div>' +
+    '</div>';
+
+  var btnEditar = document.getElementById('btn-editar-pac');
+  btnEditar.textContent = "Editar Evolução";
+  btnEditar.onclick = function() { closeModal('modal-detalhe-pac'); editarEvolucao(id); };
+  
+  document.getElementById('modal-detalhe-pac').classList.remove('hidden');
+}
+function visualizarAgendamento(id) {
+  var ag = DB.get('agendamentos').find(function(a) { return a.id === id; });
+  var pac = DB.get('pacientes').find(function(p) { return p.id === ag.pacienteId; });
+  var prof = DB.get('profissionais').find(function(p) { return p.id === ag.profId; });
+  if (!ag) return;
+
+  var tipos = {avaliacao: 'Avaliação', sessao: 'Sessão', retorno: 'Retorno', alta: 'Alta'};
+
+  document.getElementById('detalhe-pac-nome').textContent = 'Detalhes do Agendamento';
+  document.getElementById('detalhe-pac-body').innerHTML =
+    '<div class="detail-section" style="line-height: 1.6;">' +
+    '<h4 style="margin-bottom: 16px;">' + (pac ? pac.nome : 'Paciente não encontrado') + '</h4>' +
+    '<div class="detail-grid">' +
+      '<div class="detail-item"><label>DATA</label><span>' + fmtDate(ag.data) + '</span></div>' +
+      '<div class="detail-item"><label>HORÁRIO</label><span>' + ag.hora + ' (' + ag.duracao + ' min)</span></div>' +
+      '<div class="detail-item"><label>TIPO</label><span>' + (tipos[ag.tipo] || ag.tipo) + '</span></div>' +
+      '<div class="detail-item"><label>STATUS</label><span>' + statusTag(ag.status) + '</span></div>' +
+      '<div class="detail-item"><label>PROFISSIONAL</label><span>' + (prof ? prof.nome : '—') + '</span></div>' +
+    '</div>' +
+    '<div class="mt-16"><label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">OBSERVAÇÕES</label><div>' + (ag.obs || 'Nenhuma observação.').replace(/\n/g, '<br>') + '</div></div>' +
+    '</div>';
+
+  var btnEditar = document.getElementById('btn-editar-pac');
+  btnEditar.textContent = "Editar Agendamento";
+  btnEditar.onclick = function() { closeModal('modal-detalhe-pac'); editarAgendamento(id); };
+  
+  document.getElementById('modal-detalhe-pac').classList.remove('hidden');
+}
