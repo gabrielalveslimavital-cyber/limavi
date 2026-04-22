@@ -1,4 +1,3 @@
-
 // ===================== LIMAVI FISIOTERAPIA - APP.JS =====================
 
 // ─── STORAGE HELPERS ───────────────────────────────────────────────────────
@@ -28,10 +27,8 @@ function initData() {
 let currentUser = null;
 
 function showLogin() {
-  // Força a visibilidade via Style para anular a trava do HTML
   document.getElementById('login-screen').style.setProperty('display', 'flex', 'important');
   document.getElementById('app-screen').style.setProperty('display', 'none', 'important');
-  
   document.getElementById('login-screen').classList.add('active');
   document.getElementById('app-screen').classList.remove('active');
   currentUser = null;
@@ -44,10 +41,8 @@ function showApp(user) {
   document.getElementById('nav-profissionais').style.display = isAdmin ? '' : 'none';
   document.getElementById('nav-relatorios').style.display = isAdmin ? '' : 'none';
   
-  // Inverte a visibilidade: esconde login e mostra app
   document.getElementById('login-screen').style.setProperty('display', 'none', 'important');
   document.getElementById('app-screen').style.setProperty('display', 'block', 'important');
-  
   document.getElementById('login-screen').classList.remove('active');
   document.getElementById('app-screen').classList.add('active');
   navigate('dashboard');
@@ -63,59 +58,6 @@ function doLogin() {
   showLoginError('', false);
   DB.set('limavi_session', { id: user.id, exp: Date.now() + 8 * 3600 * 1000 });
   showApp(user);
-}
-
-function doCadastro() {
-  const nome = document.getElementById('cad-nome').value.trim();
-  const email = document.getElementById('cad-email').value.trim().toLowerCase();
-  const crefito = document.getElementById('cad-crefito').value.trim();
-  const senha = document.getElementById('cad-senha').value;
-  const senha2 = document.getElementById('cad-senha2').value;
-
-  if (!nome || !email || !senha) { showCadError('Preencha todos os campos obrigatórios (*).'); return; }
-  if (senha.length < 6) { showCadError('A senha deve ter no mínimo 6 caracteres.'); return; }
-  if (senha !== senha2) { showCadError('As senhas não conferem.'); return; }
-
-  const profs = DB.get('profissionais');
-  if (profs.find(p => p.email.toLowerCase() === email)) { showCadError('Este e-mail já está cadastrado.'); return; }
-
-  const novoUser = { id: DB.id(), nome, email, senha, crefito, tel: '', perfil: 'fisioterapeuta', esp: '' };
-  profs.push(novoUser);
-  DB.set('profissionais', profs);
-  DB.set('limavi_session', { id: novoUser.id, exp: Date.now() + 8 * 3600 * 1000 });
-  showCadError('', false);
-  toast('Conta criada! Bem-vindo(a), ' + nome.split(' ')[0] + '!');
-  showApp(novoUser);
-}
-
-function doLogout() {
-  DB.del('limavi_session');
-  currentUser = null;
-  document.getElementById('login-user').value = '';
-  document.getElementById('login-pass').value = '';
-  showLogin();
-}
-
-function showLoginError(msg, show = true) {
-  const el = document.getElementById('login-error');
-  el.textContent = msg; el.classList.toggle('hidden', !show);
-}
-function showCadError(msg, show = true) {
-  const el = document.getElementById('cad-error');
-  el.textContent = msg; el.classList.toggle('hidden', !show);
-}
-
-function togglePass(id) {
-  const el = document.getElementById(id);
-  el.type = el.type === 'password' ? 'text' : 'password';
-}
-
-function switchTab(tab) {
-  document.getElementById('painel-login').classList.toggle('hidden', tab !== 'login');
-  document.getElementById('painel-cadastro').classList.toggle('hidden', tab !== 'cadastro');
-  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
-  document.getElementById('tab-cadastro').classList.toggle('active', tab === 'cadastro');
-  showLoginError('', false); showCadError('', false);
 }
 
 // ─── NAVEGAÇÃO ─────────────────────────────────────────────────────────────
@@ -136,77 +78,23 @@ function navigate(page) {
   if (page === 'profissionais') renderProfissionais();
 }
 
-// ─── SIDEBAR & MODAIS ──────────────────────────────────────────────────────
-function toggleMenu() {
-  document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('sidebar-overlay').classList.toggle('active');
-}
-function closeMenu() {
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('sidebar-overlay').classList.remove('active');
-}
-
-function openModal(id) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  ['pac-id','ag-id','ev-id','an-id','pf-id'].forEach(f => { const x = document.getElementById(f); if (x) x.value = ''; });
-  const today = fmtDateISO(new Date());
-  ['ag-data','ev-data','an-data'].forEach(f => { const x = document.getElementById(f); if (x && !x.value) x.value = today; });
-  el.classList.remove('hidden');
-  populateSelects();
-}
-function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-
-function populateSelects() {
-  const pacs = DB.get('pacientes');
-  const profs = DB.get('profissionais');
-  const pacOpts = '<option value="">Selecione o paciente</option>' + pacs.map(p => '<option value="' + p.id + '">' + p.nome + '</option>').join('');
-  const profOpts = '<option value="">Selecione</option>' + profs.map(p => '<option value="' + p.id + '">' + p.nome + '</option>').join('');
-  ['ag-pac','ev-pac','an-pac'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = pacOpts; });
-  ['ag-prof','ev-prof','pac-prof'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = profOpts; });
-}
-
-function toast(msg, type) {
-  const t = document.getElementById('toast');
-  if(!t) return;
-  t.textContent = msg;
-  t.className = 'toast' + (type ? ' ' + type : '');
-  t.classList.remove('hidden');
-  setTimeout(() => t.classList.add('hidden'), 3200);
-}
-
 // ─── DASHBOARD ─────────────────────────────────────────────────────────────
 function renderDashboard() {
   const pacs = DB.get('pacientes');
   const ags = DB.get('agendamentos');
   const evs = DB.get('evolucoes');
+  const ans = DB.get('anamneses');
   const today = fmtDateISO(new Date());
   const todayAgs = ags.filter(a => a.data === today);
-  const upcoming = ags.filter(a => a.data >= today && a.status !== 'cancelado')
-    .sort((a,b) => (a.data+a.hora).localeCompare(b.data+b.hora)).slice(0,6);
 
   document.getElementById('stats-grid').innerHTML =
     '<div class="stat-card" onclick="navigate(\'pacientes\')" style="cursor:pointer;"><div class="stat-icon">👤</div><div><div class="stat-num">' + pacs.length + '</div><div class="stat-label">Pacientes</div></div></div>' +
     '<div class="stat-card" onclick="navigate(\'agenda\')" style="cursor:pointer; border-color:#e69c2a"><div class="stat-icon">📅</div><div><div class="stat-num">' + todayAgs.length + '</div><div class="stat-label">Hoje</div></div></div>' +
     '<div class="stat-card" onclick="navigate(\'evolucoes\')" style="cursor:pointer; border-color:#3aaa72"><div class="stat-icon">📋</div><div><div class="stat-num">' + evs.length + '</div><div class="stat-label">Evoluções</div></div></div>' +
-    '<div class="stat-card" onclick="navigate(\'anamneses\')" style="cursor:pointer; border-color:#4aa896"><div class="stat-icon">📝</div><div><div class="stat-num">' + DB.get('anamneses').length + '</div><div class="stat-label">Anamneses</div></div></div>';
-
-  document.getElementById('upcoming-list').innerHTML = upcoming.length
-    ? upcoming.map(a => {
-        var pac = pacs.find(p => p.id === a.pacienteId);
-        return '<div class="upcoming-item" onclick="visualizarAgendamento(\'' + a.id + '\')" style="cursor:pointer"><span class="item-time">' + a.hora + '</span><div><div class="item-name">' + (pac ? pac.nome : 'N/D') + '</div><div class="item-sub">' + fmtDate(a.data) + ' · ' + statusTag(a.status) + '</div></div></div>';
-      }).join('')
-    : '<div class="empty-state">Sem agendamentos futuros</div>';
-
-  var recentPacs = pacs.slice().reverse().slice(0,5);
-  document.getElementById('recent-patients').innerHTML = recentPacs.length
-    ? recentPacs.map(p => {
-        return '<div class="recent-item" onclick="detalhePaciente(\'' + p.id + '\')" style="cursor:pointer"><div class="card-avatar">' + initials(p.nome) + '</div><div><div class="item-name">' + p.nome + '</div><div class="item-sub">' + idade(p.dataNasc) + ' anos</div></div></div>';
-    }).join('')
-    : '<div class="empty-state">Nenhum paciente cadastrado</div>';
+    '<div class="stat-card" onclick="navigate(\'anamneses\')" style="cursor:pointer; border-color:#4aa896"><div class="stat-icon">📝</div><div><div class="stat-num">' + ans.length + '</div><div class="stat-label">Anamneses</div></div></div>';
 }
 
-// ─── PACIENTES ─────────────────────────────────────────────────────────────
+// ─── PACIENTES (CORREÇÃO DE EDIÇÃO) ────────────────────────────────────────
 function renderPacientes() {
   var query = (document.getElementById('search-paciente')?.value || '').toLowerCase();
   var pacs = DB.get('pacientes').filter(p => !query || p.nome.toLowerCase().includes(query));
@@ -230,130 +118,166 @@ function editarPaciente(id) {
   document.getElementById('pac-nome').value = pac.nome;
   document.getElementById('pac-nasc').value = pac.dataNasc;
   document.getElementById('pac-tel').value = pac.tel || '';
-  document.getElementById('modal-paciente').classList.remove('hidden');
+  openModal('modal-paciente');
 }
 
 function salvarPaciente() {
+  var id = document.getElementById('pac-id').value;
   var nome = document.getElementById('pac-nome').value.trim();
   var nasc = document.getElementById('pac-nasc').value;
   if (!nome || !nasc) return;
+
   var pacs = DB.get('pacientes');
-  var id = document.getElementById('pac-id').value;
-  var data = { id: id || DB.id(), nome, dataNasc: nasc, tel: document.getElementById('pac-tel').value };
-  if (id) { var i = pacs.findIndex(p => p.id === id); pacs[i] = data; } else { pacs.push(data); }
+  var obj = { id: id || DB.id(), nome, dataNasc: nasc, tel: document.getElementById('pac-tel').value };
+
+  if (id) {
+    var i = pacs.findIndex(p => p.id === id);
+    if (i !== -1) pacs[i] = obj;
+  } else {
+    pacs.push(obj);
+  }
+  
   DB.set('pacientes', pacs);
   closeModal('modal-paciente');
   renderPacientes(); renderDashboard();
+  toast(id ? 'Paciente atualizado!' : 'Paciente cadastrado!');
 }
 
-function deletarPaciente(id) {
-  if (!confirm('Excluir paciente?')) return;
-  DB.set('pacientes', DB.get('pacientes').filter(p => p.id !== id));
-  renderPacientes(); renderDashboard();
-}
-
-function detalhePaciente(id) {
-  var pac = DB.get('pacientes').find(p => p.id === id);
-  if (!pac) return;
-  document.getElementById('detalhe-pac-nome').textContent = pac.nome;
-  document.getElementById('detalhe-pac-body').innerHTML = `
-    <div class="detail-section">
-      <p><strong>Nascimento:</strong> ${fmtDate(pac.dataNasc)} (${idade(pac.dataNasc)} anos)</p>
-      <p><strong>Telefone:</strong> ${pac.tel || '—'}</p>
-    </div>`;
-  document.getElementById('btn-editar-pac').onclick = () => { closeModal('modal-detalhe-pac'); editarPaciente(id); };
-  document.getElementById('modal-detalhe-pac').classList.remove('hidden');
-}
-
-// ─── AGENDA ────────────────────────────────────────────────────────────────
+// ─── AGENDA (CORREÇÃO DE EDIÇÃO) ───────────────────────────────────────────
 function renderAgenda() {
   var ags = DB.get('agendamentos');
   var pacs = DB.get('pacientes');
-  var todayStr = fmtDateISO(new Date());
-  document.getElementById('week-label').textContent = 'Agendamentos';
   document.getElementById('agenda-grid').innerHTML = ags.length 
     ? ags.map(a => {
         var pac = pacs.find(p => p.id === a.pacienteId);
-        return `<div class="agenda-slot" onclick="visualizarAgendamento('${a.id}')">
+        return `<div class="agenda-slot" onclick="editarAgendamento('${a.id}')">
           <span class="slot-time">${a.hora}</span><span class="slot-name">${pac?.nome || 'N/D'}</span>
         </div>`;
       }).join('')
     : '<div class="empty-state">Sem agendamentos</div>';
 }
 
+function editarAgendamento(id) {
+  var ag = DB.get('agendamentos').find(a => a.id === id);
+  if (!ag) return;
+  openModal('modal-agendamento');
+  document.getElementById('ag-id').value = ag.id;
+  document.getElementById('ag-pac').value = ag.pacienteId;
+  document.getElementById('ag-data').value = ag.data;
+  document.getElementById('ag-hora').value = ag.hora;
+  document.getElementById('ag-status').value = ag.status || 'agendado';
+}
+
 function salvarAgendamento() {
+  var id = document.getElementById('ag-id').value;
   var pacId = document.getElementById('ag-pac').value;
   var data = document.getElementById('ag-data').value;
   var hora = document.getElementById('ag-hora').value;
   if (!pacId || !data || !hora) return;
+
   var ags = DB.get('agendamentos');
-  ags.push({ id: DB.id(), pacienteId: pacId, data, hora, status: 'agendado' });
+  var obj = { id: id || DB.id(), pacienteId: pacId, data, hora, status: document.getElementById('ag-status').value };
+
+  if (id) {
+    var i = ags.findIndex(a => a.id === id);
+    if (i !== -1) ags[i] = obj;
+  } else {
+    ags.push(obj);
+  }
+
   DB.set('agendamentos', ags);
   closeModal('modal-agendamento');
   renderAgenda(); renderDashboard();
+  toast('Agenda atualizada!');
 }
 
-// ─── EVOLUÇÕES & ANAMNESES (VISUALIZAÇÃO) ───────────────────────────────────
+// ─── EVOLUÇÕES (CORREÇÃO DE EDIÇÃO) ────────────────────────────────────────
 function renderEvolucoes() {
   var evs = DB.get('evolucoes');
   var pacs = DB.get('pacientes');
   document.getElementById('evolucoes-list').innerHTML = evs.map(e => {
     var pac = pacs.find(p => p.id === e.pacienteId);
-    return `<div class="list-card" onclick="visualizarEvolucao('${e.id}')">
-      <div class="card-avatar">📋</div>
-      <div class="card-body"><div class="card-name">${pac?.nome || 'N/D'}</div><div class="card-sub">${fmtDate(e.data)}</div></div>
-      <div class="card-actions" onclick="event.stopPropagation()">
+    return `<div class="list-card">
+      <div class="card-body" onclick="visualizarEvolucao('${e.id}')"><div class="card-name">${pac?.nome || 'N/D'}</div><div class="card-sub">${fmtDate(e.data)}</div></div>
+      <div class="card-actions">
         <button class="btn-primary btn-sm" onclick="editarEvolucao('${e.id}')">✏️</button>
       </div>
     </div>`;
   }).join('');
 }
 
-function renderAnamneses() {
-  var ans = DB.get('anamneses');
-  var pacs = DB.get('pacientes');
-  document.getElementById('anamneses-list').innerHTML = ans.map(a => {
-    var pac = pacs.find(p => p.id === a.pacienteId);
-    return `<div class="list-card" onclick="visualizarAnamnese('${a.id}')">
-      <div class="card-avatar">📝</div>
-      <div class="card-body"><div class="card-name">${pac?.nome || 'N/D'}</div><div class="card-sub">${fmtDate(a.data)}</div></div>
-      <div class="card-actions" onclick="event.stopPropagation()">
-        <button class="btn-primary btn-sm" onclick="editarAnamnese('${a.id}')">✏️</button>
-      </div>
-    </div>`;
-  }).join('');
+function editarEvolucao(id) {
+  var ev = DB.get('evolucoes').find(e => e.id === id);
+  if (!ev) return;
+  openModal('modal-evolucao');
+  document.getElementById('ev-id').value = ev.id;
+  document.getElementById('ev-pac').value = ev.pacienteId;
+  document.getElementById('ev-data').value = ev.data;
+  document.getElementById('ev-texto').value = ev.texto || ev.subj || '';
 }
 
-function visualizarEvolucao(id) {
-  var e = DB.get('evolucoes').find(x => x.id === id);
-  if (!e) return;
-  document.getElementById('detalhe-pac-nome').textContent = 'Visualizar Evolução';
-  document.getElementById('detalhe-pac-body').innerHTML = `<p>${e.subj || 'Sem conteúdo'}</p>`;
-  document.getElementById('modal-detalhe-pac').classList.remove('hidden');
+function salvarEvolucao() {
+  var id = document.getElementById('ev-id').value;
+  var pacId = document.getElementById('ev-pac').value;
+  var texto = document.getElementById('ev-texto').value;
+  if (!pacId || !texto) return;
+
+  var evs = DB.get('evolucoes');
+  var obj = { id: id || DB.id(), pacienteId: pacId, data: document.getElementById('ev-data').value, texto: texto };
+
+  if (id) {
+    var i = evs.findIndex(e => e.id === id);
+    if (i !== -1) evs[i] = obj;
+  } else {
+    evs.push(obj);
+  }
+
+  DB.set('evolucoes', evs);
+  closeModal('modal-evolucao');
+  renderEvolucoes(); renderDashboard();
+  toast('Evolução salva!');
 }
 
-function visualizarAnamnese(id) {
-  var a = DB.get('anamneses').find(x => x.id === id);
-  if (!a) return;
-  document.getElementById('detalhe-pac-nome').textContent = 'Visualizar Anamnese';
-  document.getElementById('detalhe-pac-body').innerHTML = `<p>${a.queixa || 'Sem conteúdo'}</p>`;
-  document.getElementById('modal-detalhe-pac').classList.remove('hidden');
+// ─── AUXILIARES (MODAIS E UI) ──────────────────────────────────────────────
+function openModal(id) {
+  document.getElementById(id).classList.remove('hidden');
+  populateSelects();
+}
+function closeModal(id) {
+  document.getElementById(id).classList.add('hidden');
+  // Limpa IDs ocultos ao fechar para não bugar a próxima criação
+  const inputs = document.getElementById(id).querySelectorAll('input[type="hidden"]');
+  inputs.forEach(i => i.value = '');
 }
 
-function visualizarAgendamento(id) {
-  var a = DB.get('agendamentos').find(x => x.id === id);
-  if (!a) return;
-  document.getElementById('detalhe-pac-nome').textContent = 'Agendamento';
-  document.getElementById('detalhe-pac-body').innerHTML = `<p>Data: ${fmtDate(a.data)} às ${a.hora}</p>`;
-  document.getElementById('modal-detalhe-pac').classList.remove('hidden');
+function populateSelects() {
+  const pacs = DB.get('pacientes');
+  const opts = '<option value="">Selecione o paciente</option>' + pacs.map(p => `<option value="${p.id}">${p.nome}</option>`).join('');
+  ['ag-pac','ev-pac','an-pac'].forEach(id => { 
+    const el = document.getElementById(id); 
+    if (el) {
+        const val = el.value; 
+        el.innerHTML = opts; 
+        el.value = val; 
+    }
+  });
 }
 
-// ─── HELPERS ───────────────────────────────────────────────────────────────
+function toast(msg) {
+  const t = document.getElementById('toast');
+  if(!t) return;
+  t.textContent = msg;
+  t.classList.remove('hidden');
+  setTimeout(() => t.classList.add('hidden'), 3000);
+}
+
+function toggleMenu() { document.getElementById('sidebar').classList.toggle('open'); }
+function closeMenu() { document.getElementById('sidebar').classList.remove('open'); }
+
 function fmtDateISO(d) { return d.toISOString().slice(0,10); }
 function fmtDate(iso) { if (!iso) return '—'; var p = iso.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
 function idade(nasc) { if (!nasc) return '—'; return Math.floor((Date.now() - new Date(nasc)) / (365.25*24*3600*1000)); }
 function initials(nome) { if (!nome) return '?'; var w = nome.trim().split(' '); return (w[0][0] + (w[1]?w[1][0]:'')).toUpperCase(); }
-function statusTag(s) { return `<span class="tag tag-blue">${s}</span>`; }
 
 // ─── INIT ──────────────────────────────────────────────────────────────────
 initData();
