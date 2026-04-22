@@ -1,4 +1,4 @@
-// ===================== LIMAVI FISIOTERAPIA - APP.JS =====================
+// ==// ===================== LIMAVI FISIOTERAPIA - APP.JS =====================
 
 // ─── STORAGE HELPERS ───────────────────────────────────────────────────────
 const DB = {
@@ -27,10 +27,8 @@ function initData() {
 let currentUser = null;
 
 function showLogin() {
-  // Força a tela de login a aparecer e a do app a sumir instantaneamente
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('app-screen').style.display = 'none';
-  
   document.getElementById('login-screen').classList.add('active');
   document.getElementById('app-screen').classList.remove('active');
   currentUser = null;
@@ -43,15 +41,12 @@ function showApp(user) {
   document.getElementById('nav-profissionais').style.display = isAdmin ? '' : 'none';
   document.getElementById('nav-relatorios').style.display = isAdmin ? '' : 'none';
   
-  // Destranca visualmente o app somente após a validação dos dados
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app-screen').style.display = 'block';
-  
   document.getElementById('login-screen').classList.remove('active');
   document.getElementById('app-screen').classList.add('active');
   navigate('dashboard');
 }
-
 
 function doLogin() {
   const email = document.getElementById('login-user').value.trim().toLowerCase();
@@ -140,7 +135,7 @@ function navigate(page) {
   if (page === 'relatorios') document.getElementById('relatorio-output').innerHTML = '';
 }
 
-// ─── SIDEBAR ───────────────────────────────────────────────────────────────
+// ─── SIDEBAR & MODAIS ──────────────────────────────────────────────────────
 function toggleMenu() {
   document.getElementById('sidebar').classList.toggle('open');
   document.getElementById('sidebar-overlay').classList.toggle('active');
@@ -150,7 +145,6 @@ function closeMenu() {
   document.getElementById('sidebar-overlay').classList.remove('active');
 }
 
-// ─── MODAIS ────────────────────────────────────────────────────────────────
 function openModal(id) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -171,7 +165,6 @@ function populateSelects() {
   ['ag-prof','ev-prof','pac-prof'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = profOpts; });
 }
 
-// ─── TOAST ─────────────────────────────────────────────────────────────────
 function toast(msg, type) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -199,14 +192,14 @@ function renderDashboard() {
   document.getElementById('upcoming-list').innerHTML = upcoming.length
     ? upcoming.map(function(a) {
         var pac = pacs.find(function(p) { return p.id === a.pacienteId; });
-                return '<div class="upcoming-item" onclick="visualizarAgendamento(\'' + a.id + '\')" style="cursor:pointer"><span class="item-time">' + a.hora + '</span><div><div class="item-name">' + (pac ? pac.nome : 'N/D') + '</div><div class="item-sub">' + fmtDate(a.data) + ' · ' + statusTag(a.status) + '</div></div></div>';
+        return '<div class="upcoming-item" onclick="visualizarAgendamento(\'' + a.id + '\')" style="cursor:pointer"><span class="item-time">' + a.hora + '</span><div><div class="item-name">' + (pac ? pac.nome : 'N/D') + '</div><div class="item-sub">' + fmtDate(a.data) + ' · ' + statusTag(a.status) + '</div></div></div>';
       }).join('')
     : '<div class="empty-state"><div class="empty-icon">📅</div>Sem agendamentos futuros</div>';
 
   var recentPacs = pacs.slice().reverse().slice(0,5);
   document.getElementById('recent-patients').innerHTML = recentPacs.length
     ? recentPacs.map(function(p) {
-                return '<div class="recent-item" onclick="detalhePaciente(\'' + p.id + '\')" style="cursor:pointer"><div class="card-avatar">' + initials(p.nome) + '</div><div><div class="item-name">' + p.nome + '</div><div class="item-sub">' + idade(p.dataNasc) + ' anos · ' + (p.tel || '—') + '</div></div></div>';
+        return '<div class="recent-item" onclick="detalhePaciente(\'' + p.id + '\')" style="cursor:pointer"><div class="card-avatar">' + initials(p.nome) + '</div><div><div class="item-name">' + p.nome + '</div><div class="item-sub">' + idade(p.dataNasc) + ' anos · ' + (p.tel || '—') + '</div></div></div>';
     }).join('')
     : '<div class="empty-state"><div class="empty-icon">👤</div>Nenhum paciente cadastrado</div>';
 }
@@ -289,6 +282,7 @@ function detalhePaciente(id) {
   var ans = DB.get('anamneses').filter(function(a) { return a.pacienteId === id; });
   var prof = DB.get('profissionais').find(function(p) { return p.id === pac.profId; });
   var sexMap = {M:'Masculino',F:'Feminino',O:'Outro'};
+  
   document.getElementById('detalhe-pac-nome').textContent = pac.nome;
   document.getElementById('detalhe-pac-body').innerHTML =
     '<div class="detail-section"><h4>Dados Pessoais</h4><div class="detail-grid">' +
@@ -307,8 +301,10 @@ function detalhePaciente(id) {
       return '<div class="timeline-item"><div class="tl-date">📋 ' + fmtDate(e.data) + '</div><div class="tl-body"><div class="tl-label">Sessão ' + (e.sessao||'—') + ' · EVA ' + (e.eva != null ? e.eva : '—') + '/10</div><div>' + (e.plano||'—').substring(0,90) + '</div></div></div>';
     }).join('') || '<div class="text-muted">Sem evoluções ainda.</div>') +
     '</div></div>';
+    
   document.getElementById('btn-editar-pac').onclick = function() { closeModal('modal-detalhe-pac'); editarPaciente(id); };
-    // Preparar dados para o gráfico de Dor (EVA)
+  
+  // Preparar dados para o gráfico de Dor (EVA)
   let evsOrdenadas = evs.slice().sort((a,b) => a.data.localeCompare(b.data));
   let datas = evsOrdenadas.map(e => fmtDate(e.data));
   let evas = evsOrdenadas.map(e => e.eva ? parseInt(e.eva) : null);
@@ -321,7 +317,7 @@ function detalhePaciente(id) {
     </div>
   `;
 
-  // Desenhar o Gráfico (destruindo o anterior se existir para não bugar)
+  // Desenhar o Gráfico
   if(window.meuGrafico) window.meuGrafico.destroy();
   const ctx = document.getElementById('graficoEva');
   if(ctx && evas.some(e => e !== null)) {
@@ -368,7 +364,7 @@ function renderAgenda() {
       '<div class="agenda-slots">' +
       (dayAgs.length ? dayAgs.map(function(a) {
         var pac = pacs.find(function(p) { return p.id === a.pacienteId; });
-        return '<div class="agenda-slot" onclick="visualizarAgendamento(\'' + a.id + '\')">' +
+        return '<div class="agenda-slot" onclick="visualizarAgendamento(\'' + a.id + '\')" style="cursor:pointer">' +
           '<span class="slot-time">' + a.hora + '</span>' +
           '<span class="slot-name">' + (pac?pac.nome:'N/D') + '</span>' +
           statusTag(a.status) + '</div>';
@@ -430,7 +426,7 @@ function renderEvolucoes() {
   document.getElementById('evolucoes-list').innerHTML = evs.length
     ? evs.map(function(e) {
         var pac = pacs.find(function(p) { return p.id === e.pacienteId; });
-                        return '<div class="list-card" onclick="visualizarEvolucao(\'' + e.id + '\')"><div class="card-avatar">📋</div><div class="card-body">' +
+        return '<div class="list-card" onclick="visualizarEvolucao(\'' + e.id + '\')" style="cursor:pointer"><div class="card-avatar">📋</div><div class="card-body">' +
           '<div class="card-name">' + (pac?pac.nome:'N/D') + '</div>' +
           '<div class="card-sub">' + fmtDate(e.data) + ' · Sessão ' + (e.sessao||'—') + ' · EVA: ' + (e.eva != null ? e.eva : '—') + '/10</div>' +
           '<div class="card-sub mt-8">' + (e.subj||'').substring(0,60) + '</div></div>' +
@@ -502,7 +498,7 @@ function renderAnamneses() {
   document.getElementById('anamneses-list').innerHTML = ans.length
     ? ans.map(function(a) {
         var pac = pacs.find(function(p) { return p.id === a.pacienteId; });
-                        return '<div class="list-card" onclick="visualizarAnamnese(\'' + a.id + '\')"><div class="card-avatar">📝</div><div class="card-body">' +
+        return '<div class="list-card" onclick="visualizarAnamnese(\'' + a.id + '\')" style="cursor:pointer"><div class="card-avatar">📝</div><div class="card-body">' +
           '<div class="card-name">' + (pac?pac.nome:'N/D') + '</div>' +
           '<div class="card-sub">' + fmtDate(a.data) + ' · ' + (a.diag||'Sem diagnóstico') + '</div>' +
           '<div class="card-sub mt-8">' + (a.queixa||'').substring(0,60) + '</div></div>' +
@@ -645,6 +641,119 @@ function gerarRelatorio(tipo) {
   document.getElementById('relatorio-output').innerHTML = html;
 }
 
+// ─── VISUALIZAÇÃO (LEITURA) ────────────────────────────────────────────────
+function visualizarAnamnese(id) {
+  var a = DB.get('anamneses').find(function(x) { return x.id === id; });
+  var pac = DB.get('pacientes').find(function(p) { return p.id === a.pacienteId; });
+  if (!a) return;
+
+  document.getElementById('detalhe-pac-nome').textContent = 'Anamnese: ' + (pac ? pac.nome : 'N/D');
+  document.getElementById('detalhe-pac-body').innerHTML =
+    '<div class="detail-section" style="line-height: 1.6;">' +
+    '<h4 style="margin-bottom: 16px;">Data: ' + fmtDate(a.data) + ' · ' + (a.diag||'Sem diagnóstico') + '</h4>' +
+    '<div class="mt-8"><label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">QUEIXA PRINCIPAL</label><div>' + (a.queixa||'—').replace(/\n/g, '<br>') + '</div></div>' +
+    '<div class="mt-8"><label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">HISTÓRIA (HDA)</label><div>' + (a.hda||'—').replace(/\n/g, '<br>') + '</div></div>' +
+    '<div class="mt-8"><label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">ANTECEDENTES</label><div>' + (a.pessoais||'—').replace(/\n/g, '<br>') + '</div></div>' +
+    '<div class="mt-8"><label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">MEDICAMENTOS</label><div>' + (a.meds||'—').replace(/\n/g, '<br>') + '</div></div>' +
+    '<div class="mt-8"><label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">OBJETIVOS</label><div>' + (a.objetivos||'—').replace(/\n/g, '<br>') + '</div></div>' +
+    '</div>';
+
+  var btnEditar = document.getElementById('btn-editar-pac');
+  btnEditar.textContent = "Editar Anamnese";
+  btnEditar.onclick = function() { closeModal('modal-detalhe-pac'); editarAnamnese(id); };
+  
+  document.getElementById('modal-detalhe-pac').classList.remove('hidden');
+}
+
+function visualizarEvolucao(id) {
+  var e = DB.get('evolucoes').find(function(x) { return x.id === id; });
+  var pac = DB.get('pacientes').find(function(p) { return p.id === e.pacienteId; });
+  if (!e) return;
+
+  document.getElementById('detalhe-pac-nome').textContent = 'Evolução: ' + (pac ? pac.nome : 'N/D');
+  document.getElementById('detalhe-pac-body').innerHTML =
+    '<div class="detail-section" style="line-height: 1.6;">' +
+    '<h4 style="margin-bottom: 16px;">Data: ' + fmtDate(e.data) + ' · Sessão ' + (e.sessao||'—') + ' · EVA: ' + (e.eva!=null?e.eva:'—') + '/10</h4>' +
+    '<div class="mt-8"><label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">SUBJETIVO (S)</label><div>' + (e.subj||'—').replace(/\n/g, '<br>') + '</div></div>' +
+    '<div class="mt-8"><label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">OBJETIVO (O)</label><div>' + (e.obj||'—').replace(/\n/g, '<br>') + '</div></div>' +
+    '<div class="mt-8"><label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">AVALIAÇÃO (A)</label><div>' + (e.aval||'—').replace(/\n/g, '<br>') + '</div></div>' +
+    '<div class="mt-8"><label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">PLANO / CONDUTA (P)</label><div>' + (e.plano||'—').replace(/\n/g, '<br>') + '</div></div>' +
+    '</div>';
+
+  var btnEditar = document.getElementById('btn-editar-pac');
+  btnEditar.textContent = "Editar Evolução";
+  btnEditar.onclick = function() { closeModal('modal-detalhe-pac'); editarEvolucao(id); };
+  
+  document.getElementById('modal-detalhe-pac').classList.remove('hidden');
+}
+
+function visualizarAgendamento(id) {
+  var ag = DB.get('agendamentos').find(function(a) { return a.id === id; });
+  var pac = DB.get('pacientes').find(function(p) { return p.id === ag.pacienteId; });
+  var prof = DB.get('profissionais').find(function(p) { return p.id === ag.profId; });
+  if (!ag) return;
+
+  var tipos = {avaliacao: 'Avaliação', sessao: 'Sessão', retorno: 'Retorno', alta: 'Alta'};
+
+  document.getElementById('detalhe-pac-nome').textContent = 'Detalhes do Agendamento';
+  document.getElementById('detalhe-pac-body').innerHTML =
+    '<div class="detail-section" style="line-height: 1.6;">' +
+    '<h4 style="margin-bottom: 16px;">' + (pac ? pac.nome : 'Paciente não encontrado') + '</h4>' +
+    '<div class="detail-grid">' +
+      '<div class="detail-item"><label>DATA</label><span>' + fmtDate(ag.data) + '</span></div>' +
+      '<div class="detail-item"><label>HORÁRIO</label><span>' + ag.hora + ' (' + ag.duracao + ' min)</span></div>' +
+      '<div class="detail-item"><label>TIPO</label><span>' + (tipos[ag.tipo] || ag.tipo) + '</span></div>' +
+      '<div class="detail-item"><label>STATUS</label><span>' + statusTag(ag.status) + '</span></div>' +
+      '<div class="detail-item"><label>PROFISSIONAL</label><span>' + (prof ? prof.nome : '—') + '</span></div>' +
+    '</div>' +
+    '<div class="mt-16"><label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">OBSERVAÇÕES</label><div>' + (ag.obs || 'Nenhuma observação.').replace(/\n/g, '<br>') + '</div></div>' +
+    '</div>';
+
+  var btnEditar = document.getElementById('btn-editar-pac');
+  btnEditar.textContent = "Editar Agendamento";
+  btnEditar.onclick = function() { closeModal('modal-detalhe-pac'); editarAgendamento(id); };
+  
+  document.getElementById('modal-detalhe-pac').classList.remove('hidden');
+}
+
+// ─── FERRAMENTAS CLÍNICAS (Templates, PDF) ─────────────────────────────────
+function gerarPDFPaciente() {
+  const elemento = document.getElementById('detalhe-pac-body');
+  const nomePaciente = document.getElementById('detalhe-pac-nome').textContent;
+  
+  const opt = {
+    margin:       10,
+    filename:     `Prontuario_${nomePaciente.replace(/\s+/g, '_')}.pdf`,
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2 },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+  html2pdf().set(opt).from(elemento).save();
+}
+
+function usarTemplate(tipo) {
+  const campo = document.getElementById('ev-obj');
+  let texto = "";
+  
+  if (tipo === 'neuro') {
+    texto = "- Nível de Consciência:\n- Tônus Muscular (Ashworth):\n- Controle de Tronco:\n- Equilíbrio (Estático/Dinâmico):\n- Coordenação Motora:\n- Marcha:";
+  } else if (tipo === 'respiratoria') {
+    texto = "- Padrão Ventilatório:\n- Ritmo e Amplitude:\n- Sinais de Desconforto Respiratório:\n- Ausculta Pulmonar:\n- Tosse (Eficácia/Secreção):\n- SpO2 em repouso: %";
+  } else if (tipo === 'orto') {
+    texto = "- Inspeção (Edema/Coloração):\n- Palpação:\n- ADM (Ativa e Passiva):\n- Força Muscular (Grau 0-5):\n- Testes Especiais:\n- Alterações posturais:";
+  }
+  campo.value = campo.value ? campo.value + "\n\n" + texto : texto;
+}
+
+function addConduta(texto) {
+  const campo = document.getElementById('ev-plano');
+  if (campo.value && !campo.value.endsWith('\n')) {
+    campo.value += '\n- ' + texto;
+  } else {
+    campo.value += '- ' + texto;
+  }
+}
+
 // ─── HELPERS ───────────────────────────────────────────────────────────────
 function fmtDateISO(d) { return d.toISOString().slice(0,10); }
 function fmtDate(iso) { if (!iso) return '—'; var p = iso.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
@@ -675,10 +784,11 @@ initData();
     var u = DB.get('profissionais').find(function(p) { return p.id === sess.id; });
     if (u) { showApp(u); return; }
   }
-  // Sessão inexistente ou wexpirada — força login
+  // Sessão inexistente ou expirada — força login
   DB.del('limavi_session');
   showLogin();
 })();
+
 function gerarPDFPaciente() {
   const elemento = document.getElementById('detalhe-pac-body');
   const nomePaciente = document.getElementById('detalhe-pac-nome').textContent;
