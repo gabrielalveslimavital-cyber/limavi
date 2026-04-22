@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
@@ -339,8 +340,28 @@
         <div class="form-group"><label>Sessão Nº</label><input id="ev-sessao" type="number" min="1" /></div>
       </div>
       <div class="form-group"><label>Queixa Principal / Subjetivo (S)</label><textarea id="ev-subj" rows="2" placeholder="Relato do paciente, queixas, dor (EVA 0-10)..."></textarea></div>
+      <div class="form-group">
+  <label>Templates Rápidos de Exame Físico:</label>
+  <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+    <button type="button" class="tag tag-blue" onclick="usarTemplate('neuro')">🧠 Neuro</button>
+    <button type="button" class="tag tag-green" onclick="usarTemplate('respiratoria')">🫁 Respiratória</button>
+    <button type="button" class="tag tag-orange" onclick="usarTemplate('orto')">🦴 Ortopedia</button>
+  </div>
+  <textarea id="ev-obj" rows="4" placeholder="Exame físico, medidas..."></textarea>
+</div>
       <div class="form-group"><label>Exame Físico / Objetivo (O)</label><textarea id="ev-obj" rows="2" placeholder="Avaliação física, testes, medidas, goniometria..."></textarea></div>
       <div class="form-group"><label>Análise / Avaliação (A)</label><textarea id="ev-aval" rows="2" placeholder="Hipótese diagnóstica, progressão, intercorrências..."></textarea></div>
+      <div class="form-group">
+  <label>Adicionar Conduta Rápida:</label>
+  <div style="display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
+    <button type="button" class="tag tag-gray" onclick="addConduta('Alongamento global (MMSS e MMII)')">+ Alongamento Global</button>
+    <button type="button" class="tag tag-gray" onclick="addConduta('Exercícios para fortalecimento de tronco')">+ Fortalecimento Tronco</button>
+    <button type="button" class="tag tag-gray" onclick="addConduta('Treino de equilíbrio de tronco sentado')">+ Equilíbrio Tronco</button>
+    <button type="button" class="tag tag-gray" onclick="addConduta('Manobras de higiene brônquica e reexpansão')">+ Higiene Brônquica</button>
+    <button type="button" class="tag tag-gray" onclick="addConduta('Mobilização passiva em leito')">+ Mobilização Passiva</button>
+  </div>
+  <textarea id="ev-plano" rows="3" placeholder="Técnicas utilizadas..."></textarea>
+</div>
       <div class="form-group"><label>Plano / Conduta (P)</label><textarea id="ev-plano" rows="2" placeholder="Técnicas utilizadas, exercícios, orientações, próxima sessão..."></textarea></div>
       <div class="form-row">
         <div class="form-group"><label>Dor (EVA 0-10)</label><input id="ev-eva" type="number" min="0" max="10" placeholder="0-10" /></div>
@@ -443,6 +464,11 @@
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('modal-detalhe-pac')">Fechar</button>
       <button class="btn-primary" id="btn-editar-pac">Editar</button>
+      <div class="modal-footer">
+  <button class="btn-secondary" onclick="gerarPDFPaciente()">📄 Gerar PDF</button>
+  <button class="btn-secondary" onclick="closeModal('modal-detalhe-pac')">Fechar</button>
+  <button class="btn-primary" id="btn-editar-pac">Editar</button>
+</div>
     </div>
   </div>
 </div>
