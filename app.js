@@ -188,11 +188,11 @@ function renderDashboard() {
     '<div class="stat-card" style="border-color:#e69c2a"><div class="stat-icon">📅</div><div><div class="stat-num">' + todayAgs.length + '</div><div class="stat-label">Hoje</div></div></div>' +
     '<div class="stat-card" style="border-color:#3aaa72"><div class="stat-icon">📋</div><div><div class="stat-num">' + evs.length + '</div><div class="stat-label">Evoluções</div></div></div>' +
     '<div class="stat-card" style="border-color:#4aa896"><div class="stat-icon">📝</div><div><div class="stat-num">' + DB.get('anamneses').length + '</div><div class="stat-label">Anamneses</div></div></div>';
-
-  document.getElementById('upcoming-list').innerHTML = upcoming.length
-    ? upcoming.map(function(a) {
-        var pac = pacs.find(function(p) { return p.id === a.pacienteId; });
-        return '<div class="upcoming-item" onclick="visualizarAgendamento(\'' + a.id + '\')" style="cursor:pointer"><span class="item-time">' + a.hora + '</span><div><div class="item-name">' + (pac ? pac.nome : 'N/D') + '</div><div class="item-sub">' + fmtDate(a.data) + ' · ' + statusTag(a.status) + '</div></div></div>';
+  document.getElementById('stats-grid').innerHTML =
+    '<div class="stat-card" onclick="navigate(\'pacientes\')" style="cursor:pointer; transition: transform 0.2s;"><div class="stat-icon">👤</div><div><div class="stat-num">' + pacs.length + '</div><div class="stat-label">Pacientes</div></div></div>' +
+    '<div class="stat-card" onclick="navigate(\'agenda\')" style="cursor:pointer; transition: transform 0.2s; border-color:#e69c2a"><div class="stat-icon">📅</div><div><div class="stat-num">' + todayAgs.length + '</div><div class="stat-label">Hoje</div></div></div>' +
+    '<div class="stat-card" onclick="navigate(\'evolucoes\')" style="cursor:pointer; transition: transform 0.2s; border-color:#3aaa72"><div class="stat-icon">📋</div><div><div class="stat-num">' + evs.length + '</div><div class="stat-label">Evoluções</div></div></div>' +
+    '<div class="stat-card" onclick="navigate(\'anamneses\')" style="cursor:pointer; transition: transform 0.2s; border-color:#4aa896"><div class="stat-icon">📝</div><div><div class="stat-num">' + DB.get('anamneses').length + '</div><div class="stat-label">Anamneses</div></div></div>';
       }).join('')
     : '<div class="empty-state"><div class="empty-icon">📅</div>Sem agendamentos futuros</div>';
 
