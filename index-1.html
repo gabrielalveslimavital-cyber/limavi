@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="theme-color" content="#2d7a6e" />
+  <meta name="description" content="Limavi Fisioterapia - Sistema de Gestão Clínica" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Limavi" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <title>Limavi Fisioterapia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ── Botão voltar no header ──────────────────────────────── */
+    #btn-voltar {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 8px;
+      color: var(--primary, #2c6e6a);
+      font-size: 1.3rem;
+      transition: background .15s;
+      margin-left: 4px;
+    }
+    #btn-voltar:hover { background: rgba(44,110,106,.1); }
+
+    /* Logo/título clicável */
+    .header-logo { cursor: pointer; }
+
+    /* ── Calendário ──────────────────────────────────────────── */
+    .dash-calendar-wrap {
+      background: var(--card-bg, #fff);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
+      margin-bottom: 16px;
+    }
+    .dash-section-title {
+      font-size: .78rem;
+      font-weight: 700;
+      color: var(--text-muted, #8a8a9a);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .cal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .cal-title { font-weight: 700; font-size: .95rem; color: var(--primary, #2c6e6a); }
+    .cal-nav {
+      background: none; border: none; font-size: 1.4rem;
+      cursor: pointer; color: var(--primary, #2c6e6a);
+      padding: 0 8px; line-height: 1;
+    }
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+    }
+    .cal-weekday {
+      text-align: center; font-size: .65rem; font-weight: 700;
+      color: var(--text-muted, #8a8a9a); padding: 4px 0;
+    }
+    .cal-day {
+      position: relative; aspect-ratio: 1;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 1px;
+      font-size: .78rem; border-radius: 8px;
+      color: var(--text, #333); transition: background .15s;
+    }
+    .cal-day.empty { background: none !important; }
+    .cal-day.today {
+      background: var(--primary, #2c6e6a) !important;
+      color: #fff !important; font-weight: 700;
+    }
+    .cal-day.has-ag {
+      cursor: pointer; font-weight: 600;
+      background: rgba(44,110,106,.12);
+      color: var(--primary, #2c6e6a);
+    }
+    .cal-day.has-ag:hover:not(.today) { background: rgba(44,110,106,.22); }
+    .cal-dot {
+      width: 4px; height: 4px; border-radius: 50%;
+      background: var(--primary, #2c6e6a);
+      position: absolute; bottom: 3px;
+    }
+    .cal-day.today .cal-dot { background: rgba(255,255,255,.8); }
+
+    /* ── Próximos agendamentos ───────────────────────────────── */
+    .prox-date {
+      display: flex; flex-direction: column; align-items: center;
+      min-width: 42px; background: var(--bg, #f4f4f8);
+      border-radius: 10px; padding: 6px 4px; flex-shrink: 0;
+    }
+    .prox-date.prox-today { background: var(--primary, #2c6e6a); }
+    .prox-date.prox-today .prox-day,
+    .prox-date.prox-today .prox-mon { color: #fff; }
+    .prox-day { font-size: 1.1rem; font-weight: 800; line-height: 1; color: var(--primary, #2c6e6a); }
+    .prox-mon { font-size: .6rem; font-weight: 600; color: var(--text-muted, #8a8a9a); text-transform: uppercase; }
+
+    /* ── Badges de convênio ──────────────────────────────────── */
+    .convenio-badge {
+      display: inline-block; font-size: .62rem; font-weight: 700;
+      padding: 1px 7px; border-radius: 20px;
+      margin-left: 6px; vertical-align: middle; letter-spacing: .03em;
+    }
+
+    /* ── Legenda ─────────────────────────────────────────────── */
+    .convenio-legenda {
+      display: flex; gap: 14px; flex-wrap: wrap;
+      margin-bottom: 12px; font-size: .76rem; font-weight: 600;
+    }
+    .legenda-item { display: flex; align-items: center; gap: 5px; }
+    .legenda-dot  { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── Agenda slot atualizado ──────────────────────────────── */
+    .agenda-slot {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; background: var(--card-bg, #fff);
+      border-radius: 12px; margin-bottom: 8px;
+      box-shadow: 0 1px 6px rgba(0,0,0,.05);
+      transition: box-shadow .15s; border-left-width: 4px; border-left-style: solid;
+    }
+    .agenda-slot:hover { box-shadow: 0 3px 14px rgba(0,0,0,.1); }
+    .slot-info { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .slot-time  { font-size: .73rem; color: var(--text-muted, #8a8a9a); }
+    .slot-name  { font-weight: 600; font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .slot-sub   { font-size: .73rem; color: var(--text-muted, #8a8a9a); }
+    .slot-actions { display: flex; gap: 4px; flex-shrink: 0; }
+
+    /* ── Recorrência ─────────────────────────────────────────── */
+    #recorr-dias-semana { display: none; margin-top: 10px; }
+    .dias-semana-grid {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      gap: 4px; margin-top: 6px;
+    }
+    .dia-btn {
+      aspect-ratio: 1; border-radius: 8px;
+      border: 2px solid var(--border, #e0e0e8);
+      background: none; cursor: pointer;
+      font-size: .68rem; font-weight: 700;
+      color: var(--text-muted, #8a8a9a);
+      transition: all .15s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .dia-btn.ativo {
+      background: var(--primary, #2c6e6a);
+      border-color: var(--primary, #2c6e6a);
+      color: #fff;
+    }
+    .dia-check { display: none; }
+    #recorr-fim-wrap { display: none; margin-top: 10px; }
+
+    /* ── detail-grid / detail-item ───────────────────────────── */
+    .detail-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+    .detail-item  { display: flex; flex-direction: column; gap: 2px; }
+    .detail-item label { font-size: .68rem; font-weight: 700; color: var(--text-muted, #8a8a9a); text-transform: uppercase; letter-spacing: .06em; }
+    .detail-item span  { font-size: .9rem; color: var(--text, #333); }
+    .detail-section    { margin-bottom: 16px; }
+    .detail-section h4 { font-size: .9rem; font-weight: 700; margin-bottom: 8px; color: var(--primary, #2c6e6a); }
+    .list-mini { display: flex; gap: 10px; font-size: .8rem; padding: 5px 0; border-bottom: 1px solid var(--border, #eee); }
+    .list-mini:last-child { border-bottom: none; }
+    .mt-8  { margin-top: 8px; }
+    .mt-16 { margin-top: 16px; }
+
+    /* ── Filtros da agenda ───────────────────────────────────── */
+    .agenda-filtros {
+      display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;
+    }
+    .agenda-filtro-btn {
+      padding: 6px 16px; border-radius: 20px; border: 2px solid var(--border, #e0e0e8);
+      background: none; font-size: .8rem; font-weight: 600; cursor: pointer;
+      color: var(--text-muted, #8a8a9a); transition: all .15s;
+    }
+    .agenda-filtro-btn.ativo {
+      background: var(--primary, #2c6e6a);
+      border-color: var(--primary, #2c6e6a);
+      color: #fff;
+    }
+    /* ── Grupo de paciente na agenda ─────────────────────────── */
+    .pac-grupo { margin-bottom: 10px; border-radius: 14px; overflow: hidden; background: var(--card-bg,#fff); box-shadow: 0 1px 8px rgba(0,0,0,.06); }
+    .pac-grupo-header {
+      display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+      cursor: pointer; user-select: none; transition: background .12s;
+      border-left-width: 4px; border-left-style: solid;
+    }
+    .pac-grupo-header:hover { background: rgba(44,110,106,.04); }
+    .pac-grupo-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: .85rem; flex-shrink: 0;
+    }
+    .pac-grupo-info { flex: 1; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; min-width: 0; }
+    .pac-grupo-nome { font-weight: 700; font-size: .92rem; color: var(--text,#333); }
+    .pac-grupo-meta { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .pac-grupo-badge { background: var(--primary,#2c6e6a); color: #fff; font-size: .65rem; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+    .pac-grupo-total { font-size: .72rem; color: var(--text-muted,#8a8a9a); }
+    .pac-grupo-chevron { font-size: .85rem; color: var(--text-muted,#8a8a9a); transition: transform .2s; }
+    .pac-grupo-sessoes { display: none; border-top: 1px solid var(--border,#f0f0f4); }
+    .pac-grupo-sessoes.aberto { display: block; }
+    .sessao-item {
+      display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+      border-bottom: 1px solid var(--border,#f0f0f4); cursor: pointer; transition: background .12s;
+    }
+    .sessao-item:last-child { border-bottom: none; }
+    .sessao-item:hover { background: rgba(44,110,106,.03); }
+    .sessao-finalizada { opacity: .6; }
+    .sessao-data { min-width: 90px; }
+    .sessao-dia  { display: block; font-size: .78rem; font-weight: 600; color: var(--text,#333); }
+    .sessao-hora { display: block; font-size: .72rem; color: var(--text-muted,#8a8a9a); }
+    .sessao-info { flex: 1; min-width: 0; }
+    .sessao-tipo { display: block; font-size: .78rem; color: var(--text,#333); }
+    .sessao-prof { display: block; font-size: .72rem; color: var(--text-muted,#8a8a9a); }
+    .sessao-status { font-size: .75rem; flex-shrink: 0; }
+    .sessao-acoes  { display: flex; gap: 4px; flex-shrink: 0; }
+    /* ── Status switcher rápido ──────────────────────────────── */
+    .ag-card-dash {
+      background: var(--card-bg,#fff); border-radius: 12px; margin-bottom: 10px;
+      overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,.06);
+      border-left-width: 4px; border-left-style: solid;
+    }
+    .ag-card-top { display: flex; align-items: center; gap: 10px; padding: 12px 14px; cursor: pointer; }
+    .ag-hora { font-weight: 800; font-size: 1rem; color: var(--primary,#2c6e6a); min-width: 44px; }
+    .ag-info { flex: 1; min-width: 0; }
+    .status-switcher {
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+      padding: 8px 14px 12px; border-top: 1px solid var(--border,#f0f0f4);
+      background: rgba(0,0,0,.015);
+    }
+    .status-label { font-size: .7rem; font-weight: 700; color: var(--text-muted,#8a8a9a); text-transform: uppercase; }
+    .status-switcher-inline { display: flex; gap: 6px; flex-wrap: wrap; }
+    .sts-btn {
+      padding: 5px 12px; border-radius: 20px; border: 2px solid var(--border,#e0e0e8);
+      background: none; font-size: .73rem; font-weight: 600; cursor: pointer;
+      color: var(--text-muted,#8a8a9a); transition: all .15s; white-space: nowrap;
+    }
+    .sts-btn.sts-ativo     { color: #fff !important; border-color: transparent !important; }
+    .sts-confirmado.sts-ativo { background: #3aaa72; }
+    .sts-realizado.sts-ativo  { background: #4aa896; }
+    .sts-falta.sts-ativo      { background: #888; }
+    .sts-cancelado.sts-ativo  { background: #e05a5a; }
+    .sts-agendado.sts-ativo   { background: #e69c2a; }
+    .sts-confirmado:hover { border-color:#3aaa72; color:#3aaa72; }
+    .sts-realizado:hover  { border-color:#4aa896; color:#4aa896; }
+    .sts-falta:hover      { border-color:#888;    color:#888; }
+    .sts-cancelado:hover  { border-color:#e05a5a; color:#e05a5a; }
+    .sts-agendado:hover   { border-color:#e69c2a; color:#e69c2a; }
+
+    /* ── Seleção múltipla na agenda ─────────────────────────── */
+    .sessao-selecionada {
+      background: rgba(44,110,106,.12) !important;
+      outline: 2px solid var(--primary, #2c6e6a);
+      outline-offset: -2px;
+    }
+    .sel-check { accent-color: var(--primary, #2c6e6a); }
+
+    /* ── Barra de ações em lote ──────────────────────────────── */
+    #barra-selecao {
+      display: none;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 10px 14px;
+      background: var(--primary, #2c6e6a);
+      color: #fff;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 3px 16px rgba(44,110,106,.35);
+    }
+    #sel-contador { font-size: .8rem; font-weight: 600; flex: 1; min-width: 140px; }
+    #sel-btns-lote { display: none; gap: 6px; flex-wrap: wrap; }
+
+    .lote-btn {
+      padding: 5px 12px; border-radius: 20px; font-size: .75rem; font-weight: 700;
+      border: 2px solid rgba(255,255,255,.5); background: rgba(255,255,255,.15);
+      color: #fff; cursor: pointer; white-space: nowrap; transition: background .15s;
+    }
+    .lote-btn:hover       { background: rgba(255,255,255,.3); }
+    .lote-btn.lote-danger { border-color: #ff8a80; color: #ff8a80; }
+    .lote-btn.lote-danger:hover { background: rgba(255,80,80,.25); }
+
+    .btn-sel-modo {
+      padding: 6px 14px; border-radius: 20px; font-size: .78rem; font-weight: 700;
+      border: 2px solid var(--primary, #2c6e6a); background: none;
+      color: var(--primary, #2c6e6a); cursor: pointer; transition: all .15s;
+    }
+    .btn-sel-modo:hover, .btn-sel-modo.ativo {
+      background: var(--primary, #2c6e6a); color: #fff;
+    }
+    .btn-sel-modo.cancelar {
+      border-color: #e05a5a; color: #e05a5a;
+    }
+    .btn-sel-modo.cancelar:hover { background: #e05a5a; color: #fff; }
+
+    /* ── Modal lote horário ──────────────────────────────────── */
+    #modal-lote-horario {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,.45); display: flex;
+      align-items: center; justify-content: center;
+    }
+    #modal-lote-horario.hidden { display: none !important; }
+    .lote-modal-box {
+      background: var(--card-bg, #fff); border-radius: 18px;
+      padding: 24px; width: 90%; max-width: 340px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.18);
+    }
+    .lote-modal-box h4 { margin: 0 0 16px; font-size: 1rem; color: var(--primary, #2c6e6a); }
+    .lote-modal-box .form-group { margin-bottom: 16px; }
+    .lote-modal-footer { display: flex; gap: 8px; justify-content: flex-end; }
+
+    /* ── Modal de Evolução — sinais vitais ───────────────────── */
+    .ev-secao-label {
+      font-size: .72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .07em; color: var(--primary, #2c6e6a);
+      background: rgba(44,110,106,.07); border-radius: 8px;
+      padding: 6px 10px; margin: 12px 0 8px;
+    }
+    .ev-sinais-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+    @media (max-width: 480px) {
+      .ev-sinais-grid { grid-template-columns: 1fr 1fr; }
+    }
+    .ev-input-unit {
+      display: flex; align-items: center; gap: 0;
+    }
+    .ev-input-unit input {
+      border-radius: 8px 0 0 8px !important;
+      flex: 1; min-width: 0;
+    }
+    .ev-unit {
+      background: var(--border, #e8e8f0); color: var(--text-muted, #8a8a9a);
+      font-size: .75rem; font-weight: 600; padding: 0 8px;
+      border: 1px solid var(--border, #e0e0e8); border-left: none;
+      border-radius: 0 8px 8px 0; white-space: nowrap;
+      display: flex; align-items: center; height: 40px;
+    }
+
+    /* ── Visualização da evolução ────────────────────────────── */
+    .ev-view-sinais {
+      background: rgba(44,110,106,.06); border-radius: 10px;
+      padding: 10px 12px;
+    }
+    .ev-view-label {
+      font-size: .7rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .07em; color: var(--primary, #2c6e6a);
+      margin-bottom: 8px;
+    }
+    .ev-view-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+    }
+    .ev-view-item {
+      display: flex; flex-direction: column; gap: 1px;
+      background: var(--card-bg,#fff); border-radius: 8px; padding: 6px 8px;
+    }
+    .ev-view-key { font-size: .65rem; font-weight: 700; color: var(--text-muted,#8a8a9a); text-transform: uppercase; }
+    .ev-view-val { font-size: .85rem; }
+  </style>
+</head>
+<body>
+
+<!-- ======================== LOGIN ======================== -->
+<div id="login-screen" class="screen active" style="display:flex;">
+  <div class="login-bg"></div>
+  <div class="login-card">
+    <img id="login-logo" src="icon-192.png" alt="Limavi Fisioterapia" />
+    <h1 class="login-title">Limavi</h1>
+    <p class="login-sub">Fisioterapia</p>
+
+    <div class="login-tabs">
+      <button class="login-tab active" id="tab-login"    onclick="switchTab('login')">Entrar</button>
+      <button class="login-tab"        id="tab-cadastro" onclick="switchTab('cadastro')">Criar Conta</button>
+    </div>
+
+    <!-- Painel Login -->
+    <div id="painel-login">
+      <div class="form-group">
+        <label>E-mail</label>
+        <input type="text" id="login-user" placeholder="seu@email.com" autocomplete="username" />
+      </div>
+      <div class="form-group">
+        <label>Senha</label>
+        <div class="pass-wrap">
+          <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" />
+          <button class="eye-btn" onclick="togglePass('login-pass')">👁</button>
+        </div>
+      </div>
+      <div id="login-error" class="login-error hidden">Usuário ou senha incorretos.</div>
+      <button class="btn-primary" style="width:100%" onclick="doLogin()">Entrar</button>
+    </div>
+
+    <!-- Painel Cadastro -->
+    <div id="painel-cadastro" style="display:none;">
+      <div class="form-group">
+        <label>Nome Completo *</label>
+        <input type="text" id="cad-nome" placeholder="Seu nome completo" />
+      </div>
+      <div class="form-group">
+        <label>E-mail *</label>
+        <input type="email" id="cad-email" placeholder="seu@email.com" autocomplete="email" />
+      </div>
+      <div class="form-group">
+        <label>CREFITO</label>
+        <input type="text" id="cad-crefito" placeholder="000000-F (opcional)" />
+      </div>
+      <div class="form-group">
+        <label>Senha *</label>
+        <div class="pass-wrap">
+          <input type="password" id="cad-senha" placeholder="Mínimo 6 caracteres" />
+          <button class="eye-btn" onclick="togglePass('cad-senha')">👁</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Confirmar Senha *</label>
+        <div class="pass-wrap">
+          <input type="password" id="cad-senha2" placeholder="Repita a senha" />
+          <button class="eye-btn" onclick="togglePass('cad-senha2')">👁</button>
+        </div>
+      </div>
+      <div id="cad-error" class="login-error hidden"></div>
+      <button class="btn-primary" style="width:100%" onclick="doCadastro()">Criar Conta</button>
+      <p class="login-hint">Após o cadastro, um administrador pode alterar seu perfil de acesso.</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ======================== APP ======================== -->
+<div id="app-screen" class="screen" style="display:none;">
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+
+    <!-- Logo clicável → volta ao dashboard -->
+    <div class="header-logo" onclick="navigate('dashboard')" style="cursor:pointer;">
+      <img src="icon-192.png" alt="Limavi" />
+      <span id="header-title">Limavi</span>
+    </div>
+
+    <!-- Botão voltar (aparece fora do dashboard) -->
+    <button id="btn-voltar" onclick="goBack()" title="Voltar página anterior">&#8592;</button>
+
+    <div class="header-right">
+      <span class="user-badge" id="user-badge"></span>
+      <button class="logout-btn" onclick="doLogout()" title="Sair">⎋</button>
+    </div>
+  </header>
+
+  <!-- SIDEBAR OVERLAY -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeMenu()"></div>
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <img src="icon-192.png" alt="Limavi" />
+      <div>
+        <div class="sidebar-title">Limavi</div>
+        <div class="sidebar-sub">Fisioterapia</div>
+      </div>
+    </div>
+    <ul class="sidebar-nav">
+      <li><a href="#" onclick="navigate('dashboard')"     class="nav-link active" data-page="dashboard">🏠 Dashboard</a></li>
+      <li><a href="#" onclick="navigate('pacientes')"     class="nav-link"        data-page="pacientes">👤 Pacientes</a></li>
+      <li><a href="#" onclick="navigate('agenda')"        class="nav-link"        data-page="agenda">📅 Agenda</a></li>
+      <li><a href="#" onclick="navigate('evolucoes')"     class="nav-link"        data-page="evolucoes">📋 Evoluções</a></li>
+      <li><a href="#" onclick="navigate('anamneses')"     class="nav-link"        data-page="anamneses">📝 Anamneses</a></li>
+      <li class="nav-divider"></li>
+      <li id="nav-profissionais"><a href="#" onclick="navigate('profissionais')" class="nav-link" data-page="profissionais">👨‍⚕️ Profissionais</a></li>
+      <li id="nav-relatorios">   <a href="#" onclick="navigate('relatorios')"   class="nav-link" data-page="relatorios">📊 Relatórios</a></li>
+    </ul>
+    <div class="sidebar-footer">v4.0 &copy; Limavi Fisioterapia</div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content" id="main-content">
+
+    <!-- ─── DASHBOARD ───────────────────────────────────────── -->
+    <section id="page-dashboard" class="page active">
+      <div class="page-header"><h2>Dashboard</h2></div>
+
+      <!-- Stats rápidos -->
+      <div class="stats-grid" id="stats-grid"></div>
+
+      <!-- Legenda convênios -->
+      <div class="convenio-legenda">
+        <div class="legenda-item"><div class="legenda-dot" style="background:#3a7fc1;"></div>Interakids</div>
+        <div class="legenda-item"><div class="legenda-dot" style="background:#3aaa72;"></div>Particular</div>
+        <div class="legenda-item"><div class="legenda-dot" style="background:#e69c2a;"></div>UNG</div>
+      </div>
+
+      <!-- Calendário mensal -->
+      <div class="dash-calendar-wrap">
+        <div class="dash-section-title">📅 Calendário</div>
+        <div id="dash-calendar"></div>
+      </div>
+
+      <!-- Próximos 7 dias -->
+      <div class="dash-calendar-wrap">
+        <div class="dash-section-title">🗓 Próximos 7 dias</div>
+        <div id="proximos-ags"></div>
+      </div>
+    </section>
+
+    <!-- ─── PACIENTES ───────────────────────────────────────── -->
+    <section id="page-pacientes" class="page">
+      <div class="page-header">
+        <h2>Pacientes</h2>
+        <button class="btn-primary" onclick="novoPaciente()">+ Novo Paciente</button>
+      </div>
+      <div class="convenio-legenda" style="margin-bottom:8px;">
+        <div class="legenda-item"><div class="legenda-dot" style="background:#3a7fc1;"></div>Interakids</div>
+        <div class="legenda-item"><div class="legenda-dot" style="background:#3aaa72;"></div>Particular</div>
+        <div class="legenda-item"><div class="legenda-dot" style="background:#e69c2a;"></div>UNG</div>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="search-paciente" placeholder="Buscar paciente..." oninput="renderPacientes()" />
+      </div>
+      <div id="pacientes-list" class="card-list"></div>
+    </section>
+
+    <!-- ─── AGENDA ──────────────────────────────────────────── -->
+    <section id="page-agenda" class="page">
+      <div class="page-header">
+        <h2>Agenda</h2>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn-sel-modo" id="btn-modo-selecao" onclick="ativarModoSelecao()">☑ Selecionar</button>
+          <button class="btn-primary"  onclick="novoAgendamento()">+ Agendar</button>
+        </div>
+      </div>
+      <div class="convenio-legenda" style="margin-bottom:8px;">
+        <div class="legenda-item"><div class="legenda-dot" style="background:#3a7fc1;"></div>Interakids</div>
+        <div class="legenda-item"><div class="legenda-dot" style="background:#3aaa72;"></div>Particular</div>
+        <div class="legenda-item"><div class="legenda-dot" style="background:#e69c2a;"></div>UNG</div>
+      </div>
+      <!-- Filtros Ativo / Histórico -->
+      <div class="agenda-filtros">
+        <button class="agenda-filtro-btn ativo" data-filtro="ativos"    onclick="setFiltroAgenda('ativos')">📅 Agendamentos Ativos</button>
+        <button class="agenda-filtro-btn"       data-filtro="historico" onclick="setFiltroAgenda('historico')">🗂 Histórico</button>
+      </div>
+
+      <!-- Barra de ações em lote (aparece no modo seleção) -->
+      <div id="barra-selecao">
+        <span id="sel-contador">Nenhuma sessão selecionada</span>
+        <div id="sel-btns-lote">
+          <button class="lote-btn" onclick="editarHorarioLote()">🕐 Alterar Horário</button>
+          <button class="lote-btn" onclick="alterarStatusLote('confirmado')">✅ Confirmar</button>
+          <button class="lote-btn" onclick="alterarStatusLote('realizado')">✔ Marcar Realizado</button>
+          <button class="lote-btn" onclick="alterarStatusLote('cancelado')">✖ Cancelar</button>
+          <button class="lote-btn lote-danger" onclick="excluirLote()">🗑 Excluir</button>
+        </div>
+        <button class="btn-sel-modo cancelar" onclick="cancelarModoSelecao()" style="margin-left:auto;">✕ Sair</button>
+      </div>
+
+      <div id="agenda-grid" class="agenda-grid"></div>
+    </section>
+
+    <!-- Modal edição de horário em lote -->
+    <div id="modal-lote-horario" class="hidden">
+      <div class="lote-modal-box">
+        <h4>🕐 Alterar Horário em Lote</h4>
+        <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:14px;">
+          O novo horário será aplicado a todas as sessões selecionadas.
+        </p>
+        <div class="form-group">
+          <label>Novo Horário *</label>
+          <input type="time" id="lote-hora" />
+        </div>
+        <div class="lote-modal-footer">
+          <button class="btn-secondary" onclick="fecharModalLote()">Cancelar</button>
+          <button class="btn-primary"   onclick="confirmarEditarHorarioLote()">Confirmar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── EVOLUÇÕES ───────────────────────────────────────── -->
+    <section id="page-evolucoes" class="page">
+      <div class="page-header">
+        <h2>Evoluções</h2>
+        <button class="btn-primary" onclick="novaEvolucao()">+ Nova Evolução</button>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="search-evolucao" placeholder="Buscar por paciente..." oninput="renderEvolucoes()" />
+      </div>
+      <div id="evolucoes-list" class="card-list"></div>
+    </section>
+
+    <!-- ─── ANAMNESES ───────────────────────────────────────── -->
+    <section id="page-anamneses" class="page">
+      <div class="page-header">
+        <h2>Anamneses</h2>
+        <button class="btn-primary" onclick="novaAnamnese()">+ Nova Anamnese</button>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="search-anamnese" placeholder="Buscar por paciente..." oninput="renderAnamneses()" />
+      </div>
+      <div id="anamneses-list" class="card-list"></div>
+    </section>
+
+    <!-- ─── PROFISSIONAIS ───────────────────────────────────── -->
+    <section id="page-profissionais" class="page">
+      <div class="page-header">
+        <h2>Profissionais</h2>
+        <button class="btn-primary" onclick="novoProfissional()">+ Novo Profissional</button>
+      </div>
+      <div id="profissionais-list" class="card-list"></div>
+    </section>
+
+    <!-- ─── RELATÓRIOS ──────────────────────────────────────── -->
+    <section id="page-relatorios" class="page">
+      <div class="page-header"><h2>Relatórios</h2></div>
+      <div class="relatorio-grid">
+        <div class="relatorio-card" onclick="gerarRelatorio('pacientes')">
+          <div class="rel-icon">👤</div><div>Relatório de Pacientes</div>
+        </div>
+        <div class="relatorio-card" onclick="gerarRelatorio('agenda')">
+          <div class="rel-icon">📅</div><div>Relatório de Agendamentos</div>
+        </div>
+        <div class="relatorio-card" onclick="gerarRelatorio('evolucoes')">
+          <div class="rel-icon">📋</div><div>Relatório de Evoluções</div>
+        </div>
+      </div>
+      <div id="relatorio-output"></div>
+    </section>
+
+  </main>
+</div><!-- fim #app-screen -->
+
+<!-- ====================== MODAIS ====================== -->
+
+<!-- ── Modal Paciente ─────────────────────────────────────────── -->
+<div id="modal-paciente" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-paciente-title">Novo Paciente</h3>
+      <button onclick="closeModal('modal-paciente')" class="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="pac-id" />
+      <div class="form-row">
+        <div class="form-group"><label>Nome Completo *</label><input id="pac-nome" type="text" placeholder="Nome do paciente" /></div>
+        <div class="form-group"><label>Data de Nascimento *</label><input id="pac-nasc" type="date" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>CPF</label><input id="pac-cpf" type="text" placeholder="000.000.000-00" /></div>
+        <div class="form-group"><label>Telefone</label><input id="pac-tel" type="tel" placeholder="(00) 00000-0000" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Email</label><input id="pac-email" type="email" placeholder="email@exemplo.com" /></div>
+        <div class="form-group">
+          <label>Sexo</label>
+          <select id="pac-sexo">
+            <option value="">Selecione</option>
+            <option value="M">Masculino</option>
+            <option value="F">Feminino</option>
+            <option value="O">Outro</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Endereço</label><input id="pac-end" type="text" placeholder="Rua, número, bairro, cidade" /></div>
+      <div class="form-row">
+        <!-- Convênio agora é SELECT com as 3 categorias de cores -->
+        <div class="form-group">
+          <label>Convênio / Origem</label>
+          <select id="pac-convenio">
+            <option value="particular">Particular</option>
+            <option value="interakids">Interakids</option>
+            <option value="ung">UNG</option>
+            <option value="outro">Outro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Profissional Responsável</label>
+          <select id="pac-prof"></select>
+        </div>
+      </div>
+      <div class="form-group"><label>Diagnóstico</label><input id="pac-diag" type="text" placeholder="CID / diagnóstico principal" /></div>
+      <div class="form-group"><label>Observações</label><textarea id="pac-obs" rows="2" placeholder="Observações gerais"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-paciente')">Cancelar</button>
+      <button class="btn-primary"   onclick="salvarPaciente()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal Agendamento (com recorrência e convênio) ─────────── -->
+<div id="modal-agendamento" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-ag-title">Novo Agendamento</h3>
+      <button onclick="closeModal('modal-agendamento')" class="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="ag-id" />
+
+      <div class="form-row">
+        <div class="form-group"><label>Paciente *</label><select id="ag-pac"><option value="">Selecione</option></select></div>
+        <div class="form-group"><label>Profissional Responsável *</label><select id="ag-prof"><option value="">Selecione</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Data *</label><input id="ag-data" type="date" /></div>
+        <div class="form-group"><label>Horário *</label><input id="ag-hora" type="time" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Duração (min)</label><input id="ag-duracao" type="number" value="50" min="10" max="180" step="5" /></div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="ag-status">
+            <option value="agendado">⏳ Agendado</option>
+            <option value="confirmado">✅ Confirmado</option>
+            <option value="realizado">✔ Realizado</option>
+            <option value="cancelado">✖ Cancelado</option>
+            <option value="falta">🚫 Falta</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Tipo de Atendimento</label>
+          <select id="ag-tipo">
+            <option value="sessao">Sessão</option>
+            <option value="avaliacao">Avaliação</option>
+            <option value="retorno">Retorno</option>
+            <option value="alta">Alta</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Convênio</label>
+          <select id="ag-convenio">
+            <option value="">— do paciente —</option>
+            <option value="particular">Particular</option>
+            <option value="interakids">Interakids</option>
+            <option value="ung">UNG</option>
+            <option value="outro">Outro</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Recorrência -->
+      <div class="form-group">
+        <label>Recorrência</label>
+        <select id="ag-recorrencia" onchange="atualizarRecorrencia()">
+          <option value="unico">Sessão única</option>
+          <option value="diario">Todos os dias</option>
+          <option value="3x-semana">3× por semana (Seg / Qua / Sex)</option>
+          <option value="semanal">Semanal — escolher dias</option>
+          <option value="personalizado">Personalizado — escolher dias</option>
+        </select>
+      </div>
+
+      <!-- Dias da semana (aparece em semanal / personalizado) -->
+      <div id="recorr-dias-semana">
+        <label style="font-size:.78rem;color:var(--text-muted,#8a8a9a);font-weight:600;">Dias da semana</label>
+        <div class="dias-semana-grid">
+          <button type="button" class="dia-btn" onclick="toggleDia(this,0)">Dom</button>
+          <button type="button" class="dia-btn" onclick="toggleDia(this,1)">Seg</button>
+          <button type="button" class="dia-btn" onclick="toggleDia(this,2)">Ter</button>
+          <button type="button" class="dia-btn" onclick="toggleDia(this,3)">Qua</button>
+          <button type="button" class="dia-btn" onclick="toggleDia(this,4)">Qui</button>
+          <button type="button" class="dia-btn" onclick="toggleDia(this,5)">Sex</button>
+          <button type="button" class="dia-btn" onclick="toggleDia(this,6)">Sáb</button>
+        </div>
+        <!-- Checkboxes ocultos para leitura no JS -->
+        <div style="display:none;">
+          <input type="checkbox" class="dia-check" value="0">
+          <input type="checkbox" class="dia-check" value="1">
+          <input type="checkbox" class="dia-check" value="2">
+          <input type="checkbox" class="dia-check" value="3">
+          <input type="checkbox" class="dia-check" value="4">
+          <input type="checkbox" class="dia-check" value="5">
+          <input type="checkbox" class="dia-check" value="6">
+        </div>
+      </div>
+
+      <!-- Data de término da recorrência -->
+      <div id="recorr-fim-wrap">
+        <div class="form-group">
+          <label for="ag-recorr-fim">Repetir até *</label>
+          <input type="date" id="ag-recorr-fim" />
+        </div>
+      </div>
+
+      <div class="form-group"><label>Observações</label><textarea id="ag-obs" rows="2" placeholder="Observações opcionais..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-agendamento')">Cancelar</button>
+      <button class="btn-primary"   onclick="salvarAgendamento()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal Evolução ─────────────────────────────────────────── -->
+<div id="modal-evolucao" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-ev-title">Nova Evolução</h3>
+      <button onclick="closeModal('modal-evolucao')" class="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="ev-id" />
+
+      <!-- Paciente + Data -->
+      <div class="form-row">
+        <div class="form-group"><label>Paciente *</label><select id="ev-pac"><option value="">Selecione</option></select></div>
+        <div class="form-group"><label>Data *</label><input id="ev-data" type="date" /></div>
+      </div>
+
+      <!-- Sinais vitais INICIAIS -->
+      <div class="ev-secao-label">📊 Sinais Vitais Iniciais</div>
+      <div class="ev-sinais-grid">
+        <div class="form-group">
+          <label>PA Inicial</label>
+          <input id="ev-pa-ini" type="text" placeholder="120/80 mmHg" />
+        </div>
+        <div class="form-group">
+          <label>SpO₂ Inicial</label>
+          <div class="ev-input-unit">
+            <input id="ev-spo2-ini" type="number" min="0" max="100" placeholder="98" />
+            <span class="ev-unit">%</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>FC Inicial</label>
+          <div class="ev-input-unit">
+            <input id="ev-bpm-ini" type="number" min="0" max="300" placeholder="72" />
+            <span class="ev-unit">bpm</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Descrição da evolução -->
+      <div class="form-group" style="margin-top:4px;">
+        <label>Descrição da Evolução *</label>
+        <textarea id="ev-descricao" rows="5"
+          placeholder="Descreva a sessão: conduta realizada, resposta do paciente, intercorrências, exercícios aplicados, progressão..."></textarea>
+      </div>
+
+      <!-- Sinais vitais FINAIS -->
+      <div class="ev-secao-label">📊 Sinais Vitais Finais</div>
+      <div class="ev-sinais-grid">
+        <div class="form-group">
+          <label>PA Final</label>
+          <input id="ev-pa-fin" type="text" placeholder="120/80 mmHg" />
+        </div>
+        <div class="form-group">
+          <label>SpO₂ Final</label>
+          <div class="ev-input-unit">
+            <input id="ev-spo2-fin" type="number" min="0" max="100" placeholder="98" />
+            <span class="ev-unit">%</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>FC Final</label>
+          <div class="ev-input-unit">
+            <input id="ev-bpm-fin" type="number" min="0" max="300" placeholder="72" />
+            <span class="ev-unit">bpm</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-evolucao')">Cancelar</button>
+      <button class="btn-primary"   onclick="salvarEvolucao()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal Anamnese ─────────────────────────────────────────── -->
+<div id="modal-anamnese" class="modal-overlay hidden">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h3 id="modal-an-title">Nova Anamnese</h3>
+      <button onclick="closeModal('modal-anamnese')" class="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="an-id" />
+      <div class="form-row">
+        <div class="form-group"><label>Paciente *</label><select id="an-pac"><option value="">Selecione</option></select></div>
+        <div class="form-group"><label>Data *</label><input id="an-data" type="date" /></div>
+      </div>
+      <div class="form-group"><label>Queixa Principal *</label><textarea id="an-queixa" rows="2" placeholder="Motivo da consulta..."></textarea></div>
+      <div class="form-group"><label>História da Doença Atual (HDA)</label><textarea id="an-hda" rows="3" placeholder="Início dos sintomas, evolução..."></textarea></div>
+      <div class="form-group"><label>Antecedentes Pessoais</label><textarea id="an-pessoais" rows="2" placeholder="Cirurgias, internações, traumas..."></textarea></div>
+      <div class="form-group"><label>Antecedentes Familiares</label><textarea id="an-familiares" rows="2" placeholder="Doenças hereditárias, histórico familiar..."></textarea></div>
+      <div class="form-group"><label>Medicamentos em Uso</label><textarea id="an-meds" rows="2" placeholder="Nome, dose, frequência..."></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label>Alergias</label><input id="an-alergia" type="text" placeholder="Medicamentos, alimentos, etc." /></div>
+        <div class="form-group"><label>Profissão do Paciente</label><input id="an-prof-pac" type="text" placeholder="Ocupação" /></div>
+      </div>
+      <div class="form-group"><label>Hábitos de Vida</label><textarea id="an-habitos" rows="2" placeholder="Atividade física, tabagismo, etilismo..."></textarea></div>
+      <div class="form-group"><label>Diagnóstico Médico</label><input id="an-diag" type="text" placeholder="CID ou diagnóstico médico de encaminhamento" /></div>
+      <div class="form-group"><label>Exames Complementares</label><textarea id="an-exames" rows="2" placeholder="Resultados de exames, imagens, laudos..."></textarea></div>
+      <div class="form-group"><label>Objetivos do Tratamento</label><textarea id="an-objetivos" rows="2" placeholder="O que o paciente espera da fisioterapia..."></textarea></div>
+      <div class="form-group"><label>Observações do Fisioterapeuta</label><textarea id="an-obs-fisio" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-anamnese')">Cancelar</button>
+      <button class="btn-primary"   onclick="salvarAnamnese()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal Profissional ─────────────────────────────────────── -->
+<div id="modal-profissional" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-pf-title">Novo Profissional</h3>
+      <button onclick="closeModal('modal-profissional')" class="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="prof-id" />
+      <div class="form-row">
+        <div class="form-group"><label>Nome Completo *</label><input id="prof-nome" type="text" /></div>
+        <div class="form-group"><label>CREFITO</label><input id="prof-crefito" type="text" placeholder="000000-F" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Email (login) *</label><input id="prof-email" type="email" /></div>
+        <div class="form-group"><label>Senha *</label><input id="prof-senha" type="password" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Telefone</label><input id="prof-tel" type="tel" /></div>
+        <div class="form-group">
+          <label>Perfil</label>
+          <select id="prof-perfil">
+            <option value="fisioterapeuta">Fisioterapeuta</option>
+            <option value="estagiario">Estagiário</option>
+            <option value="admin">Administrador</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Especialidade</label><input id="prof-esp" type="text" placeholder="Ex: Ortopedia, Neurologia..." /></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-profissional')">Cancelar</button>
+      <button class="btn-primary"   onclick="salvarProfissional()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal Detalhe / Visualização ──────────────────────────── -->
+<div id="modal-detalhe-pac" class="modal-overlay hidden">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h3 id="detalhe-pac-nome">Detalhes</h3>
+      <button onclick="closeModal('modal-detalhe-pac')" class="modal-close">✕</button>
+    </div>
+    <div class="modal-body" id="detalhe-pac-body"></div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="gerarPDFPaciente()">📄 Gerar PDF</button>
+      <button class="btn-secondary" onclick="closeModal('modal-detalhe-pac')">Fechar</button>
+      <button class="btn-primary"   id="btn-editar-pac">Editar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast hidden"></div>
+
+<script src="app.js"></script>
+<script>
+  // Registro do Service Worker
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+
+  // Aba de login/cadastro
+  function switchTab(tab) {
+    const pLogin    = document.getElementById('painel-login');
+    const pCadastro = document.getElementById('painel-cadastro');
+    const tLogin    = document.getElementById('tab-login');
+    const tCadastro = document.getElementById('tab-cadastro');
+
+    if (tab === 'login') {
+      pLogin.style.display    = 'block';
+      pCadastro.style.display = 'none';
+    } else {
+      pLogin.style.display    = 'none';
+      pCadastro.style.display = 'block';
+    }
+
+    // Remove hidden caso esteja presente (garante que style.css não interfere)
+    pLogin.classList.remove('hidden');
+    pCadastro.classList.remove('hidden');
+
+    tLogin.classList.toggle('active',    tab === 'login');
+    tCadastro.classList.toggle('active', tab === 'cadastro');
+  }
+
+  // Mostrar/ocultar senha
+  function togglePass(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.type = el.type === 'password' ? 'text' : 'password';
+  }
+
+  // Cadastro de novo usuário
+  function doCadastro() {
+    const nome   = document.getElementById('cad-nome')?.value.trim()  || '';
+    const email  = document.getElementById('cad-email')?.value.trim().toLowerCase() || '';
+    const crefito= document.getElementById('cad-crefito')?.value.trim() || '';
+    const senha  = document.getElementById('cad-senha')?.value  || '';
+    const senha2 = document.getElementById('cad-senha2')?.value || '';
+    const errEl  = document.getElementById('cad-error');
+
+    const show = (msg) => { if (errEl) { errEl.textContent = msg; errEl.classList.remove('hidden'); errEl.style.display = 'block'; } };
+
+    if (!nome || !email || !senha)   { show('Preencha todos os campos obrigatórios.'); return; }
+    if (senha.length < 6)            { show('A senha deve ter pelo menos 6 caracteres.'); return; }
+    if (senha !== senha2)            { show('As senhas não coincidem.'); return; }
+
+    const profs = DB.get('profissionais');
+    if (profs.find(p => p.email === email)) { show('E-mail já cadastrado.'); return; }
+
+    profs.push({ id: DB.id(), nome, email, senha, perfil: 'fisioterapeuta', crefito, tel: '', esp: '' });
+    DB.set('profissionais', profs);
+
+    if (errEl) { errEl.classList.add('hidden'); errEl.style.display = 'none'; }
+    alert('Conta criada! Faça login.');
+    switchTab('login');
+    document.getElementById('login-user').value = email;
+  }
+</script>
+</body>
+</html>
